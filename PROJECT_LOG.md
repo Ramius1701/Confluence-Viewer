@@ -144,3 +144,15 @@ First Confluence change on the fork, not committed yet. A thin rebrand: what use
   in `aurora-render` (`water_mesh_depth_clamp…`, `pbr_terrain_samples…`) fail on this PC. The rebrand doesn't touch
   that crate, but they weren't run on an unmodified checkout to compare. `cargo fmt --check` passes. Clippy and
   `check.ps1` weren't run, and the viewer wasn't launched.
+
+## Media plugins hosted on the fork (2026-11-08)
+
+The first launch after the rebrand (b3e431bd) ran and closed cleanly, and logged as Confluence Viewer. It found one
+break: the 240 MB media plugins pack (CEF, VLC, SLPlugin) downloads from the release feed, which now points at the
+fork. The fork had no releases, so the download got a 404 and web pages and video had no plugins.
+
+Fixed by copying Aurora's `media-plugins-1`, `-2` and `-3` releases to the fork unchanged. That covers Windows (all
+three), Linux (2, 3) and macOS (3), with their `.sha256` files and the LGPL source archives. Each archive's SHA-256 was
+checked against Aurora's before upload. The archives keep Aurora's names (`Aurora-Media-Plugins-<n>-<system>.zip`),
+because the viewer builds the name and checks size and hash itself (`aurora-updater/src/media_pack.rs`). When upstream
+moves to a new pack, copy that release too, or media breaks again.
