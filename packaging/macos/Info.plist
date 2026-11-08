@@ -8,15 +8,15 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>Aurora Viewer</string>
+	<string>Confluence Viewer</string>
 	<key>CFBundleName</key>
-	<string>Aurora Viewer</string>
+	<string>Confluence Viewer</string>
 	<key>CFBundleExecutable</key>
 	<string>aurora-viewer</string>
 	<key>CFBundleIconFile</key>
-	<string>Aurora</string>
+	<string>Confluence</string>
 	<key>CFBundleIdentifier</key>
-	<string>org.aurora-viewer.AuroraViewer</string>
+	<string>org.confluence-viewer.ConfluenceViewer</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundlePackageType</key>
@@ -44,6 +44,6 @@
 	<string>NSApplication</string>
 	<!-- voice chat: without it macOS ends the app when the microphone opens -->
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Aurora Viewer uses the microphone for voice chat in Second Life.</string>
+	<string>Confluence Viewer uses the microphone for voice chat.</string>
 </dict>
 </plist>

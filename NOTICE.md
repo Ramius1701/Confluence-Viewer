@@ -17,6 +17,18 @@ Aurora Viewer is not provided, endorsed or supported by Linden Research, Inc.
 ("Linden Lab") or The Phoenix Firestorm Project, Inc. Second Life® is a
 trademark of Linden Research, Inc.
 
+## Confluence Viewer: a modified version of Aurora Viewer
+
+Confluence Viewer is a modified version of Aurora Viewer, forked on
+2026-11-08 from github.com/Aurora-Viewer/Aurora-Viewer and changed since then
+(see the Git history of github.com/Ramius1701/Confluence-Viewer). It keeps the
+notices above and below, and stays under the same licence, GPLv3 or later.
+Modifications are copyright © 2026 the Confluence Viewer contributors.
+
+Confluence Viewer has its own name and logo, and is not provided, endorsed or
+supported by the Aurora Viewer team. Report its problems to Confluence Viewer,
+not to Aurora Viewer.
+
 ## Code derived from the Second Life viewer and Firestorm
 
 Many parts of this program are Rust ports of the Second Life viewer

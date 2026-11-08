@@ -2233,7 +2233,7 @@ pub fn config_dir() -> PathBuf {
 
 /// The settings folder before the demo's subfolder.
 pub(crate) fn default_config_root() -> PathBuf {
-    directories::ProjectDirs::from("org", "Aurora", "AuroraViewer")
+    directories::ProjectDirs::from("org", "Confluence", "ConfluenceViewer")
         .map(|d| d.config_dir().to_path_buf())
         .unwrap_or_else(|| PathBuf::from("."))
 }
@@ -2275,7 +2275,7 @@ pub fn asset_cache_dir() -> PathBuf {
 }
 
 pub(crate) fn default_cache_root() -> PathBuf {
-    directories::ProjectDirs::from("org", "Aurora", "AuroraViewer")
+    directories::ProjectDirs::from("org", "Confluence", "ConfluenceViewer")
         .map(|d| d.cache_dir().to_path_buf())
         .unwrap_or_else(|| PathBuf::from("cache"))
 }
@@ -2297,7 +2297,7 @@ pub fn media_plugins_dir() -> PathBuf {
     if let Some(test) = aurora_updater::test_environment() {
         return test.root.join("media-plugins");
     }
-    directories::ProjectDirs::from("org", "Aurora", "AuroraViewer")
+    directories::ProjectDirs::from("org", "Confluence", "ConfluenceViewer")
         .map(|d| d.data_local_dir().join("media-plugins"))
         .unwrap_or_else(|| PathBuf::from("media-plugins"))
 }

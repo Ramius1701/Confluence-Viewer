@@ -1,13 +1,18 @@
 <div align="center">
 
-<img src="assets/branding/aurora-logo.svg" alt="Aurora Viewer" width="180">
+<img src="assets/branding/confluence-logo.svg" alt="Confluence Viewer" width="180">
 
-# Aurora Viewer
+# Confluence Viewer
+
+**A modified version of [Aurora Viewer](https://github.com/Aurora-Viewer/Aurora-Viewer), for OpenSim grids and the Confluence project.**<br>
+It is not made or supported by the Aurora Viewer team. The rest of this page is Aurora Viewer's own README.
+
+---
 
 **A modern Second Life viewer, written in Rust.**<br>
 A Vulkan renderer, a clean interface, and the Second Life you already know.
 
-[![Download](docs/readme/button-download.svg)](https://github.com/Aurora-Viewer/Aurora-Viewer/releases/latest)&nbsp;
+[![Download](docs/readme/button-download.svg)](https://github.com/Ramius1701/Confluence-Viewer/releases/latest)&nbsp;
 [![Download for Linux](docs/readme/button-download-linux.svg)](docs/LINUX.md)&nbsp;
 [![Download for macOS (experimental)](docs/readme/button-download-macos.svg)](docs/MACOS.md)&nbsp;
 [![Discord](docs/readme/button-discord.svg)](https://discord.gg/TK4nbMGmKt)&nbsp;

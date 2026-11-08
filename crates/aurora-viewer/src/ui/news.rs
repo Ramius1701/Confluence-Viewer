@@ -132,7 +132,7 @@ impl Source {
                 log::info!("Login news read from {} (AURORA_NEWS_URL), not kept in the cache", source.base);
                 return Some(source);
             }
-            log::warn!("AURORA_NEWS_URL ignored: neither a server of this machine nor a folder of the Aurora Viewer repository");
+            log::warn!("AURORA_NEWS_URL ignored: neither a server of this machine nor a folder of the Confluence Viewer repository");
         }
         let base = crate::links::NEWS_FEED;
         (!base.is_empty()).then(|| Self {
@@ -474,8 +474,8 @@ mod tests {
             ("http://localhost:8123/news/", "http://localhost:8123/news/", true),
             ("http://[::1]:8123/news", "http://[::1]:8123/news/", true),
             (
-                " https://raw.githubusercontent.com/Aurora-Viewer/Aurora-Viewer/feat/actualites-md/news ",
-                "https://raw.githubusercontent.com/Aurora-Viewer/Aurora-Viewer/feat/actualites-md/news/",
+                " https://raw.githubusercontent.com/Ramius1701/Confluence-Viewer/feat/actualites-md/news ",
+                "https://raw.githubusercontent.com/Ramius1701/Confluence-Viewer/feat/actualites-md/news/",
                 false,
             ),
         ] {
@@ -492,15 +492,18 @@ mod tests {
             "http://127.0.0.1.example.org/",
             "http://user:secret@127.0.0.1/",
             "http://127.0.0.1/?next=https://example.org",
-            "http://raw.githubusercontent.com/Aurora-Viewer/Aurora-Viewer/main/news/",
-            "https://raw.githubusercontent.com/Somebody/Aurora-Viewer/main/news/",
-            "https://raw.githubusercontent.com/Aurora-Viewer/Aurora-Viewer/../../Somebody/Else/main/",
-            "https://raw.githubusercontent.com.example.org/Aurora-Viewer/Aurora-Viewer/main/news/",
+            "http://raw.githubusercontent.com/Ramius1701/Confluence-Viewer/main/news/",
+            "https://raw.githubusercontent.com/Somebody/Confluence-Viewer/main/news/",
+            "https://raw.githubusercontent.com/Ramius1701/Confluence-Viewer/../../Somebody/Else/main/",
+            "https://raw.githubusercontent.com.example.org/Ramius1701/Confluence-Viewer/main/news/",
             "file:///C:/news/",
         ] {
             assert!(Source::test(address).is_none(), "{address}");
         }
-        assert!(crate::links::NEWS_FEED.starts_with(crate::links::RAW_FILES) && crate::links::NEWS_FEED.ends_with('/'));
+        assert!(
+            crate::links::NEWS_FEED.is_empty()
+                || (crate::links::NEWS_FEED.starts_with(crate::links::RAW_FILES) && crate::links::NEWS_FEED.ends_with('/'))
+        );
     }
 
     #[test]
