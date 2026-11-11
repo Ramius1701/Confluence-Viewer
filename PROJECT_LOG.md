@@ -156,3 +156,12 @@ three), Linux (2, 3) and macOS (3), with their `.sha256` files and the LGPL sour
 checked against Aurora's before upload. The archives keep Aurora's names (`Aurora-Media-Plugins-<n>-<system>.zip`),
 because the viewer builds the name and checks size and hash itself (`aurora-updater/src/media_pack.rs`). When upstream
 moves to a new pack, copy that release too, or media breaks again.
+
+## Upstream sync (2026-11-12)
+
+Merged 173 commits from Aurora's `main` (up to cf5445ce, release v0.9.7-beta.20261111.2). Only the three locale files
+conflicted: they were taken from upstream and renamed again with the same Aurora → Confluence script. A new data folder
+in `blender_live/installer.rs` was moved to the Confluence one. The media plugins pack is unchanged (still 1–3), so
+nothing new needs copying. The outfit HD picture keeps Aurora's inventory marker
+(`Outfit HD picture (Aurora Viewer)`), so outfits stay compatible with Aurora users. Tests: everything passes
+except the same two GPU tests in `aurora-render` that already failed on this PC.
