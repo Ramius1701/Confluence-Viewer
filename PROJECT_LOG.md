@@ -165,3 +165,5 @@ in `blender_live/installer.rs` was moved to the Confluence one. The media plugin
 nothing new needs copying. The outfit HD picture keeps Aurora's inventory marker
 (`Outfit HD picture (Aurora Viewer)`), so outfits stay compatible with Aurora users. Tests: everything passes
 except the same two GPU tests in `aurora-render` that already failed on this PC.
+- 2026-11-12, later: merged 3 more upstream commits (up to b564c18e: script recovery after a crash, the reorganized
+  Build window, the 0.9.7 README notes). Locales renamed again; tests as above.
