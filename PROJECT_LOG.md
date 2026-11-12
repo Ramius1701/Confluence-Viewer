@@ -167,3 +167,14 @@ nothing new needs copying. The outfit HD picture keeps Aurora's inventory marker
 except the same two GPU tests in `aurora-render` that already failed on this PC.
 - 2026-11-12, later: merged 3 more upstream commits (up to b564c18e: script recovery after a crash, the reorganized
   Build window, the 0.9.7 README notes). Locales renamed again; tests as above.
+
+## More renaming, and OpenSim in the tagline (2026-11-12)
+
+Merged 4 more upstream commits (startup splash, voice ICE fix, complexity notice, AMD leaves/hair). Renamed what
+still said Aurora Viewer: the new startup splash title, the login screen's account carousel title, the photo folder
+(`Pictures\Confluence Viewer`), the media browser's user agent, the Linux media audio stream names, and the demo's
+mentions of the viewer (places in the demo world keep their Aurora names). The login tagline now reads
+"Second Life & OpenSim client · Rust · Vulkan" (French and Japanese too).
+
+The locale rename now lives in the repo, `scripts/branding/rebrand-locales.py`: after each upstream merge, take
+upstream's three `.ftl` files on conflict and run it on them. It is idempotent.

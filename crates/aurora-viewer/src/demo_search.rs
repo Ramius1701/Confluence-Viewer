@@ -59,7 +59,7 @@ fn groups() -> Vec<(Uuid, String, i32)> {
         (DEMO_GROUP2, aurora_i18n::tr!("demo-northern-wolves").to_owned(), 86),
         (id(GROUP, 3), "Nordheim Sailing Club".to_owned(), 412),
         (id(GROUP, 4), "Boreal Photographers".to_owned(), 2731),
-        (id(GROUP, 5), "Aurora Viewer Testers".to_owned(), 19),
+        (id(GROUP, 5), "Confluence Viewer Testers".to_owned(), 19),
         (id(GROUP, 6), "Pixel Boutique VIP".to_owned(), 5560),
     ]
 }
