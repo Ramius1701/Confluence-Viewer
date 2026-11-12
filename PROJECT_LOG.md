@@ -178,3 +178,18 @@ mentions of the viewer (places in the demo world keep their Aurora names). The l
 
 The locale rename now lives in the repo, `scripts/branding/rebrand-locales.py`: after each upstream merge, take
 upstream's three `.ftl` files on conflict and run it on them. It is idempotent.
+
+## First Confluence release, v0.9.8 (2026-11-13)
+
+Merged 24 more upstream commits (Aurora's 0.9.8 and the first 0.9.9 betas). The fork had been running Aurora's
+Nightly workflow twice a day; every run failed at `scripts/verify-version.ps1`, which expected the exe to say
+"Aurora Viewer", and left three `v0.9.4-beta…` tags on GitHub (20261108.2, 20261109.1, 20261112.1, deleted). Fixed
+for the fork:
+
+- `verify-version.ps1` expects "Confluence Viewer <version>"; the release title is "Confluence Viewer <tag>".
+- `.github/release-notes-header.md` names Confluence, credits Aurora Viewer, and points support at the fork's issues.
+- The Nightly schedule is off: releases are made by hand (a version tag), or a beta from the Actions tab.
+- Version numbers follow the Aurora release a Confluence release is built on (v0.9.8 here). The local clone no
+  longer fetches Aurora's tags (`remote.upstream.tagOpt --no-tags`), so `git describe` only sees the fork's.
+
+The release asset names stay Aurora's (`Aurora-Viewer-<tag>-windows-x64.zip`): the updater looks for that name.

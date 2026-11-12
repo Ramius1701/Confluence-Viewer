@@ -11,10 +11,9 @@ name: Nightly
 # Run by hand ("Run workflow" on main) for a beta now. Pull requests that
 # change these files run the fixture tests.
 on:
-  schedule:
-    # 11:00 and 23:00 UTC: noon and midnight in France in winter (CET), 1 pm
-    # and 1 am in summer (CEST); a schedule is UTC only
-    - cron: '0 11,23 * * *'
+  # Confluence Viewer publishes releases by hand only: the twice-daily
+  # schedule of Aurora Viewer (cron '0 11,23 * * *') is off in the fork.
+  # Run it from the Actions tab to publish a beta on demand.
   workflow_dispatch:
   pull_request:
     paths:

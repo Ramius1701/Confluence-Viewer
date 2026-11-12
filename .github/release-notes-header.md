@@ -1,4 +1,4 @@
 > This software is not provided or supported by Linden Lab, the makers of Second Life.
 
-Support: [issues](https://github.com/Aurora-Viewer/Aurora-Viewer/issues) · [Discord](https://discord.gg/TK4nbMGmKt) · [contact@aurora-viewer.org](mailto:contact@aurora-viewer.org) — Privacy: [aurora-viewer.org/privacy](https://aurora-viewer.org/privacy/) — Early development (0.x): see [what works today](https://github.com/Aurora-Viewer/Aurora-Viewer#what-works-today) and the [roadmap](https://github.com/Aurora-Viewer/Aurora-Viewer#roadmap).
+Confluence Viewer is a modified version of [Aurora Viewer](https://github.com/Aurora-Viewer/Aurora-Viewer), for Second Life and OpenSim grids. It is not provided or supported by the Aurora Viewer team. Support: [issues](https://github.com/Ramius1701/Confluence-Viewer/issues). Early development (0.x).
 
