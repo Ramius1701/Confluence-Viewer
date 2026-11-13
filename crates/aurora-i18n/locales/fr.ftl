@@ -1434,6 +1434,26 @@ ui-inventory-properties-acquired-on = Acquis le :
 ui-inventory-properties-creator-unknown-multiple = (inconnu / multiple)
 ui-inventory-properties-creator-unknown-multiple-hint = Le simulateur ne donne pas de créateur pour cet objet : un objet dont les parties ont été créées par plusieurs résidents n’en a pas.
 world-groups-action-denied = Action refusée
+world-groups-error-while-moderating = Erreur lors de la modération.
+world-ban-all-title = Bannissements de groupe
+world-ban-all-started = { $count ->
+    [one] Mise à jour du bannissement de { $name } dans { $count } groupe. Un rapport suivra à la fin.
+   *[other] Mise à jour des bannissements de { $name } dans { $count } groupes, un groupe à la fois. Un rapport suivra à la fin.
+}
+world-ban-all-report =
+    { $done ->
+        [one] { $name } : bannissement réussi dans { $done } groupe sur { $count }.
+       *[other] { $name } : bannissement réussi dans { $done } groupes sur { $count }.
+    }
+    Réussi dans : { $succeeded }
+    Échec dans : { $failed }
+world-unban-all-report =
+    { $done ->
+        [one] { $name } : bannissement levé dans { $done } groupe sur { $count }.
+       *[other] { $name } : bannissement levé dans { $done } groupes sur { $count }.
+    }
+    Levé dans : { $succeeded }
+    Échec dans : { $failed }
 common-enable = Activer
 common-activate = Activer
 ui-options-enable-this-channel = Activer ce canal
@@ -3435,6 +3455,7 @@ ui-profile-let-other-residents-know-your-favorite-places-in-second = Faites conn
 build-ui-tools-drag-to-move-ctrl-to-lift-ctrl-shift-to = Faites glisser pour déplacer, appuyez sur Ctrl pour soulever, Ctrl-Maj pour pivoter
 ui-places-drag-a-landmark-here-to-add-it-to-your = Faites glisser un repère ici pour l'ajouter à vos Favoris.
 demo-family = Famille
+demo-set-notices-busy = À tout de suite, la famille ! Je suis en mode « Ne pas déranger ».
 demo-social-menu-set = Meute
 demo-shop = Boutique
 demo-boreal-lagoon = Lagune Boréale
@@ -4615,6 +4636,21 @@ inventory-thumbnail-save-not-confirmed = Impossible de confirmer l’enregistrem
 ui-appearance-gallery-edit-your-outfit = Modifier votre tenue
 ui-profile-modify-delete-or-take-my-objects = Modifier, supprimer ou prendre mes objets
 ui-chat-moderator-click-profile = Modérateur · clic : profil
+ui-chat-moderator-options = Options du modérateur
+ui-chat-eject-from-group = Expulser du groupe
+ui-chat-allow-text-chat = Autoriser le chat texte
+ui-chat-forbid-text-chat = Interdire le chat texte
+ui-chat-ban-member = Bannir le membre
+ui-chat-ban-from-all-groups = Bannir de tous mes groupes
+ui-chat-unban-from-all-groups = Débannir de tous mes groupes
+ui-chat-ban-from-all-groups-confirm = { $count ->
+    [one] Vous allez bannir { $name } du seul groupe où vous pouvez gérer les bannissements :
+   *[other] Vous allez bannir { $name } des { $count } groupes où vous pouvez gérer les bannissements :
+}
+ui-chat-unban-from-all-groups-confirm = { $count ->
+    [one] Vous allez lever le bannissement de { $name } dans le seul groupe où vous pouvez gérer les bannissements :
+   *[other] Vous allez lever le bannissement de { $name } dans les { $count } groupes où vous pouvez gérer les bannissements :
+}
 common-moderate = Modéré
 ui-worldmap-moderate = Modérés
 common-me = Moi
@@ -6098,6 +6134,9 @@ stream-title-copy-selected = Copier dans le presse-papiers
 stream-title-copy-short = Copier
 ui-bars-animation-explorer = Explorateur d'animations
 ui-bars-edit-particles = Modifier les particules
+ui-bars-save-to-object-contents = Renvoyer dans le contenu de l’objet
+ui-bars-save-to-object-contents-tip = Sélectionnez un objet rezzé depuis le contenu d’un autre objet (pas un attachement), avec « Modifier les parties liées » désactivé.
+ui-bars-save-to-object-contents-sent = Une copie de « { $name } » est renvoyée dans le contenu de l’objet dont elle a été rezzée.
 ui-bars-media-streams-backup = Sauvegarde des flux média
 ui-bars-import-stream-list = Importer la liste des flux…
 ui-bars-export-stream-list = Exporter la liste des flux…
@@ -6572,6 +6611,14 @@ ui-contacts-sort-by-username = Trier par nom d'utilisateur
 ui-contacts-sort-by-online-status = Trier par statut en ligne
 ui-contacts-separate-chats = Afficher les membres du cercle à part des autres
 ui-contacts-separate-chats-tip = Leurs conversations privées ont leur propre section, au-dessus de Messages privés, dans Conversations. Un résident de plusieurs de ces cercles va dans le plus prioritaire.
+ui-contacts-show-notifications = Afficher les notifications
+ui-contacts-show-notifications-tip = Les avis de connexion et de déconnexion des membres de ce cercle, comme choisi sous Tous les cercles, même s'ils sont désactivés pour vos autres amis.
+ui-contacts-set-responses = Réponses automatiques de ce cercle
+ui-contacts-set-response-busy = Réponse « Ne pas déranger » propre à ce cercle
+ui-contacts-set-response-autorespond = Réponse « Réponse automatique » propre à ce cercle
+ui-contacts-set-response-nonfriends = Réponse aux non-amis propre à ce cercle
+ui-contacts-set-notices-toast = Avis de connexion des cercles avec notifications en toasts
+ui-contacts-set-notices-chat = Avis de connexion des cercles avec notifications dans le chat local
 build-mod-too-many-prims-in-a-single-object-256 = Trop de prims pour un seul objet ({ $total }{ " > 256)" }
 session-object-actions-too-many-inventory-requests-in-progress = Trop de requêtes d'inventaire en cours.
 session-object-actions-too-many-inventory-transfers-in-progress = Trop de transferts d'inventaire en cours.

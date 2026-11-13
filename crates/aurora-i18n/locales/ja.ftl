@@ -1428,6 +1428,17 @@ ui-inventory-properties-acquired-on = 入手日：
 ui-inventory-properties-creator-unknown-multiple = （不明／複数）
 ui-inventory-properties-creator-unknown-multiple-hint = シミュレーターはこのアイテムの制作者を返しません：複数の住人が作ったパーツからなるオブジェクトには制作者がありません。
 world-groups-action-denied = 操作が拒否されました
+world-groups-error-while-moderating = モデレート中にエラーが発生しました。
+world-ban-all-title = グループのバン
+world-ban-all-started = { $count }個のグループで{ $name }のバンを更新しています。１つずつ処理し、終わったら結果をお知らせします。
+world-ban-all-report =
+    { $name }を{ $count }個のグループのうち{ $done }個でバンしました。
+    バンしたグループ：{ $succeeded }
+    失敗したグループ：{ $failed }
+world-unban-all-report =
+    { $name }のバンを{ $count }個のグループのうち{ $done }個で解除しました。
+    解除したグループ：{ $succeeded }
+    失敗したグループ：{ $failed }
 common-enable = 有効にする
 common-activate = 有効化
 ui-options-enable-this-channel = このチャンネルを有効にする
@@ -3428,6 +3439,7 @@ ui-profile-let-other-residents-know-your-favorite-places-in-second = Second Life
 build-ui-tools-drag-to-move-ctrl-to-lift-ctrl-shift-to = ドラッグして移動、Ctrlで持ち上げ、Ctrl＋Shiftで回転
 ui-places-drag-a-landmark-here-to-add-it-to-your = ランドマークをここにドラッグして、お気に入りに追加してください。
 demo-family = 家族
+demo-set-notices-busy = 家族のみんな、すぐ戻ります！いまは取り込み中です。
 demo-social-menu-set = 一団
 demo-shop = ショップ
 demo-boreal-lagoon = Boreal Lagoon
@@ -4600,6 +4612,15 @@ inventory-thumbnail-save-not-confirmed = 画像の保存を確認できません
 ui-appearance-gallery-edit-your-outfit = アウトフィットを編集
 ui-profile-modify-delete-or-take-my-objects = 自分のオブジェクトを変更、削除、取得できる
 ui-chat-moderator-click-profile = モデレーター・クリック：プロフィール
+ui-chat-moderator-options = モデレーターオプション
+ui-chat-eject-from-group = グループから追放
+ui-chat-allow-text-chat = テキストチャットを許可
+ui-chat-forbid-text-chat = テキストチャットを禁止
+ui-chat-ban-member = メンバーをバン
+ui-chat-ban-from-all-groups = 自分のすべてのグループからバン
+ui-chat-unban-from-all-groups = 自分のすべてのグループでバンを解除
+ui-chat-ban-from-all-groups-confirm = バンを管理できる{ $count }個のグループすべてから{ $name }をバンしようとしています：
+ui-chat-unban-from-all-groups-confirm = バンを管理できる{ $count }個のグループすべてで{ $name }のバンを解除しようとしています：
 common-moderate = 中程度
 ui-worldmap-moderate = 中程度
 common-me = 自分
@@ -6068,6 +6089,9 @@ stream-title-copy-selected = クリップボードにコピー
 stream-title-copy-short = コピー
 ui-bars-animation-explorer = アニメーションエクスプローラ
 ui-bars-edit-particles = パーティクルの編集
+ui-bars-save-to-object-contents = オブジェクトの中身に保存し直す
+ui-bars-save-to-object-contents-tip = 別のオブジェクトの中身からRezしたオブジェクト（アタッチメント以外）を、「リンクされたパーツを編集」をオフにして選択してください。
+ui-bars-save-to-object-contents-sent = 「{ $name }」のコピーを、Rezした元のオブジェクトの中身に保存しています。
 ui-bars-media-streams-backup = メディアストリームのバックアップ
 ui-bars-import-stream-list = ストリームのリストをインポート…
 ui-bars-export-stream-list = ストリームのリストをエクスポート…
@@ -6542,6 +6566,14 @@ ui-contacts-sort-by-username = ユーザ名で並べ替え
 ui-contacts-sort-by-online-status = オンライン状態で並べ替え
 ui-contacts-separate-chats = コンタクトセットのメンバーを他と分けて表示
 ui-contacts-separate-chats-tip = 会話ウィンドウで、プライベートな会話がプライベートメッセージの上に独自のセクションとして表示されます。複数のセットに属する住人は、優先度が最も高いセットに入ります。
+ui-contacts-show-notifications = 通知を表示
+ui-contacts-show-notifications-tip = このセットのメンバーのオンライン／オフライン通知を、「すべてのコンタクトセット」での設定どおりに表示します。他のフレンドの通知がオフでも表示されます。
+ui-contacts-set-responses = このセットの自動返信
+ui-contacts-set-response-busy = このセット専用の取り込み中の返信を使う
+ui-contacts-set-response-autorespond = このセット専用の「自動返信」の返信を使う
+ui-contacts-set-response-nonfriends = このセット専用のフレンド以外への返信を使う
+ui-contacts-set-notices-toast = 通知ありのセットのオンライン通知をトースト通知で表示
+ui-contacts-set-notices-chat = 通知ありのセットのオンライン通知を近くのチャットに表示
 build-mod-too-many-prims-in-a-single-object-256 = １つのオブジェクトのプリムが多すぎます（{ $total }{ "＞256）" }
 session-object-actions-too-many-inventory-requests-in-progress = 処理中のインベントリのリクエストが多すぎます。
 session-object-actions-too-many-inventory-transfers-in-progress = 処理中のインベントリの転送が多すぎます。

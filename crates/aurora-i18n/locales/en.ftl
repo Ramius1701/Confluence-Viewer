@@ -1431,6 +1431,26 @@ ui-inventory-properties-acquired-on = Acquired on:
 ui-inventory-properties-creator-unknown-multiple = (unknown / multiple)
 ui-inventory-properties-creator-unknown-multiple-hint = The simulator gives no creator for this item: an object whose parts were made by several residents has none.
 world-groups-action-denied = Action denied
+world-groups-error-while-moderating = Error while moderating.
+world-ban-all-title = Group bans
+world-ban-all-started = { $count ->
+    [one] Updating the group ban of { $name } in { $count } group. A report will follow when done.
+   *[other] Updating the group bans of { $name } in { $count } groups, one group at a time. A report will follow when done.
+}
+world-ban-all-report =
+    { $count ->
+        [one] { $name } has been banned in { $done } of { $count } group.
+       *[other] { $name } has been banned in { $done } of { $count } groups.
+    }
+    Banned in: { $succeeded }
+    Failed in: { $failed }
+world-unban-all-report =
+    { $count ->
+        [one] The ban on { $name } has been lifted in { $done } of { $count } group.
+       *[other] The ban on { $name } has been lifted in { $done } of { $count } groups.
+    }
+    Lifted in: { $succeeded }
+    Failed in: { $failed }
 common-enable = Enable
 common-activate = Activate
 ui-options-enable-this-channel = Enable this channel
@@ -3432,6 +3452,7 @@ ui-profile-let-other-residents-know-your-favorite-places-in-second = Let other r
 build-ui-tools-drag-to-move-ctrl-to-lift-ctrl-shift-to = Drag to move, Ctrl to lift, Ctrl-Shift to rotate
 ui-places-drag-a-landmark-here-to-add-it-to-your = Drag a landmark here to add it to your Favorites.
 demo-family = Family
+demo-set-notices-busy = Back soon, family! I am in do not disturb.
 demo-social-menu-set = Pack
 demo-shop = Shop
 demo-boreal-lagoon = Boreal Lagoon
@@ -4609,6 +4630,21 @@ inventory-thumbnail-save-not-confirmed = The picture could not be confirmed as s
 ui-appearance-gallery-edit-your-outfit = Edit your outfit
 ui-profile-modify-delete-or-take-my-objects = Modify, delete or take my objects
 ui-chat-moderator-click-profile = Moderator · click: profile
+ui-chat-moderator-options = Moderator options
+ui-chat-eject-from-group = Eject from group
+ui-chat-allow-text-chat = Allow text chat
+ui-chat-forbid-text-chat = Forbid text chat
+ui-chat-ban-member = Ban member
+ui-chat-ban-from-all-groups = Ban from all my groups
+ui-chat-unban-from-all-groups = Unban from all my groups
+ui-chat-ban-from-all-groups-confirm = { $count ->
+    [one] You are about to ban { $name } from the only group you can manage bans in:
+   *[other] You are about to ban { $name } from all { $count } groups you can manage bans in:
+}
+ui-chat-unban-from-all-groups-confirm = { $count ->
+    [one] You are about to lift the ban on { $name } in the only group you can manage bans in:
+   *[other] You are about to lift the ban on { $name } in all { $count } groups you can manage bans in:
+}
 common-moderate = Moderate
 ui-worldmap-moderate = Moderate
 common-me = Me
@@ -6090,6 +6126,9 @@ stream-title-copy-selected = Copy to clipboard
 stream-title-copy-short = Copy
 ui-bars-animation-explorer = Animation explorer
 ui-bars-edit-particles = Edit particles
+ui-bars-save-to-object-contents = Save back to object contents
+ui-bars-save-to-object-contents-tip = Select an object rezzed from another object's contents (not an attachment), with Edit linked parts off.
+ui-bars-save-to-object-contents-sent = Saving a copy of “{ $name }” into the contents of the object it was rezzed from.
 ui-bars-media-streams-backup = Media streams backup
 ui-bars-import-stream-list = Import the stream list…
 ui-bars-export-stream-list = Export the stream list…
@@ -6564,6 +6603,14 @@ ui-contacts-sort-by-username = Sort by username
 ui-contacts-sort-by-online-status = Sort by online status
 ui-contacts-separate-chats = Display contact set members separately from others
 ui-contacts-separate-chats-tip = Their private conversations get a section of their own, above Private messages, in Conversations. A resident in several such sets goes to the highest-priority one.
+ui-contacts-show-notifications = Show notifications
+ui-contacts-show-notifications-tip = Online and offline notices for this set's members, as chosen under All contact sets, even when they are off for your other friends.
+ui-contacts-set-responses = Automatic responses of this set
+ui-contacts-set-response-busy = Use a custom Do Not Disturb response for this set
+ui-contacts-set-response-autorespond = Use a custom “Auto-reply” response for this set
+ui-contacts-set-response-nonfriends = Use a custom response to non-friends for this set
+ui-contacts-set-notices-toast = Show online notices for sets with notifications as toasts
+ui-contacts-set-notices-chat = Show online notices for sets with notifications in nearby chat
 build-mod-too-many-prims-in-a-single-object-256 = Too many prims in a single object ({ $total }{ " > 256)" }
 session-object-actions-too-many-inventory-requests-in-progress = Too many inventory requests in progress.
 session-object-actions-too-many-inventory-transfers-in-progress = Too many inventory transfers in progress.
