@@ -160,14 +160,14 @@ fn components(name: &str) -> Result<Vec<&str>> {
 }
 
 pub fn extract(path: &Path, root: &Path, tag: &str, cancel: &Cancel) -> Result<PathBuf> {
-    unpack(path, root, &format!("Aurora-Viewer-{tag}-windows-x64"), cancel)?;
+    unpack(path, root, &format!("{}-{tag}-windows-x64", crate::feed::PACKAGE), cancel)?;
     let manifest: InstallManifest = serde_json::from_slice(&fs::read(root.join("aurora-install.json"))?)?;
     ensure!(
         manifest.schema == 1 && manifest.version == tag.trim_start_matches('v'),
         "package version mismatch"
     );
     ensure!(
-        root.join("aurora-viewer.exe").is_file() && root.join("assets").is_dir() && root.join("LICENSE").is_file(),
+        root.join(crate::install::EXE).is_file() && root.join("assets").is_dir() && root.join("LICENSE").is_file(),
         "incomplete viewer package"
     );
     Ok(root.to_path_buf())

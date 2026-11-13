@@ -1200,7 +1200,7 @@ exe before publishing; the local build also writes it to `version.txt`.
   from this computer" does, without its confirmation (see
   [Removing Aurora](#removing-aurora)); it prints each part with its result,
   then the folders to delete, and exits with code 1 when a part could not be
-  removed. On Windows, run it as `aurora-viewer.exe --uninstall | more` so
+  removed. On Windows, run it as `confluence-viewer.exe --uninstall | more` so
   the terminal waits for its text. With `AURORA_DEMO=1` it is a dry run that
   removes nothing.
 - `--login`: the account follows the usual "remember" choices; a single

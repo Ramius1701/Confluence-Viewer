@@ -124,11 +124,11 @@ fn zip(entries: &[(&str, &[u8])]) -> Vec<u8> {
 }
 fn valid_zip() -> Vec<u8> {
     zip(&[
-        ("Aurora-Viewer-v0.3.0-windows-x64/aurora-viewer.exe", b"new viewer"),
-        ("Aurora-Viewer-v0.3.0-windows-x64/assets/character/avatar.llm", b"avatar"),
-        ("Aurora-Viewer-v0.3.0-windows-x64/LICENSE", b"license"),
+        ("Confluence-Viewer-v0.3.0-windows-x64/confluence-viewer.exe", b"new viewer"),
+        ("Confluence-Viewer-v0.3.0-windows-x64/assets/character/avatar.llm", b"avatar"),
+        ("Confluence-Viewer-v0.3.0-windows-x64/LICENSE", b"license"),
         (
-            "Aurora-Viewer-v0.3.0-windows-x64/aurora-install.json",
+            "Confluence-Viewer-v0.3.0-windows-x64/aurora-install.json",
             br#"{"schema":1,"version":"0.3.0"}"#,
         ),
     ])
@@ -178,7 +178,7 @@ fn verifies_and_extracts_real_download() {
         |_| {},
     ))
     .expect("verified download");
-    assert_eq!(fs::read(root.join("aurora-viewer.exe")).expect("viewer"), b"new viewer");
+    assert_eq!(fs::read(root.join("confluence-viewer.exe")).expect("viewer"), b"new viewer");
 }
 
 #[test]
@@ -230,8 +230,8 @@ fn invalid_zip_paths_and_case_aliases_do_not_escape_staging() {
     for entries in [
         vec![("../escape.txt", b"bad".as_slice())],
         vec![
-            ("Aurora-Viewer-v0.3.0-windows-x64/FILE", b"a".as_slice()),
-            ("Aurora-Viewer-v0.3.0-windows-x64/file", b"b".as_slice()),
+            ("Confluence-Viewer-v0.3.0-windows-x64/FILE", b"a".as_slice()),
+            ("Confluence-Viewer-v0.3.0-windows-x64/file", b"b".as_slice()),
         ],
     ] {
         let temp = Temp::new();
@@ -245,7 +245,7 @@ fn invalid_zip_paths_and_case_aliases_do_not_escape_staging() {
 
 fn installation(path: &Path, version: &[u8]) {
     fs::create_dir_all(path.join("assets")).expect("assets");
-    fs::write(path.join("aurora-viewer.exe"), version).expect("viewer");
+    fs::write(path.join("confluence-viewer.exe"), version).expect("viewer");
     fs::write(path.join("LICENSE"), b"license").expect("license");
 }
 #[test]
@@ -258,18 +258,37 @@ fn new_viewer_failure_restores_old_files_and_preserves_profile() {
     installation(&work.root.join("prepared"), b"new");
     assert!(
         install::apply(&install, &work.root, || {
-            assert_eq!(fs::read(install.join("aurora-viewer.exe"))?, b"new");
-            assert_eq!(fs::read(work.root.join("backup/aurora-viewer.exe"))?, b"old");
+            assert_eq!(fs::read(install.join("confluence-viewer.exe"))?, b"new");
+            assert_eq!(fs::read(work.root.join("backup/confluence-viewer.exe"))?, b"old");
             anyhow::bail!("new process exited without a frame")
         })
         .is_err()
     );
-    assert_eq!(fs::read(install.join("aurora-viewer.exe")).expect("restored"), b"old");
+    assert_eq!(fs::read(install.join("confluence-viewer.exe")).expect("restored"), b"old");
     assert!(
-        work.root.join("failed/aurora-viewer.exe").is_file(),
+        work.root.join("failed/confluence-viewer.exe").is_file(),
         "the new package was actually launched then rolled back"
     );
     assert_eq!(fs::read(temp.0.join("settings.json")).expect("profile intact"), b"preferences");
+}
+
+/// An install of Confluence 0.9.8 has the viewer under Aurora's name: the
+/// updater still takes it as an install, and moves it to a package with the
+/// new name and the launcher under the old one.
+#[test]
+fn install_under_aurora_name_moves_to_the_new_name() {
+    let temp = Temp::new();
+    let path = temp.0.join("install");
+    fs::create_dir_all(path.join("assets")).expect("assets");
+    fs::write(path.join("aurora-viewer.exe"), b"old").expect("viewer under Aurora's name");
+    fs::write(path.join("LICENSE"), b"license").expect("license");
+    let work = install::Workspace::new(&path).expect("a 0.9.8 install is an install");
+    let prepared = work.root.join("prepared");
+    installation(&prepared, b"new");
+    fs::write(prepared.join("aurora-viewer.exe"), b"launcher").expect("launcher");
+    install::apply(&path, &work.root, || Ok(())).expect("swap committed");
+    assert_eq!(fs::read(path.join("confluence-viewer.exe")).expect("new viewer"), b"new");
+    assert_eq!(fs::read(path.join("aurora-viewer.exe")).expect("launcher"), b"launcher");
 }
 
 #[test]
@@ -284,11 +303,11 @@ fn success_removes_backup_only_after_launch_and_refuses_foreign_files_or_concurr
     assert!(install::Workspace::new(&path).is_err());
     installation(&work.root.join("prepared"), b"new");
     install::apply(&path, &work.root, || {
-        assert!(work.root.join("backup/aurora-viewer.exe").is_file());
+        assert!(work.root.join("backup/confluence-viewer.exe").is_file());
         Ok(())
     })
     .expect("swap committed");
-    assert_eq!(fs::read(path.join("aurora-viewer.exe")).expect("new viewer"), b"new");
+    assert_eq!(fs::read(path.join("confluence-viewer.exe")).expect("new viewer"), b"new");
     assert!(!work.root.join("backup").exists());
 }
 

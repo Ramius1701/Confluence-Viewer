@@ -193,3 +193,21 @@ for the fork:
   longer fetches Aurora's tags (`remote.upstream.tagOpt --no-tags`), so `git describe` only sees the fork's.
 
 The release asset names stay Aurora's (`Aurora-Viewer-<tag>-windows-x64.zip`): the updater looks for that name.
+
+## Program and downloads renamed to Confluence (2026-11-13)
+
+Merged 14 more upstream commits (Aurora fixed the same clippy 1.100 loops; their versions are kept). Then renamed what
+users download and run:
+
+- Releases are `Confluence-Viewer-<tag>-windows-x64.zip` (also `-linux-x64.tar.gz`, `-macos-arm64.dmg`, and the
+  Windows symbols zip). The program inside is `confluence-viewer.exe` (`confluence-viewer` on Linux).
+- Cargo still builds `aurora-viewer(.exe)`: `scripts/package.ps1` renames it in the package (`-ExeName`). This keeps
+  CI, scripts and docs merging cleanly from Aurora.
+- The Windows package also ships `aurora-viewer.exe`, a tiny launcher (`crates/confluence-launcher`) that starts
+  `confluence-viewer.exe`, so old shortcuts, pinned icons and `secondlife://` handlers keep working.
+- **Bridge for 0.9.8 installs:** their updater only finds `Aurora-Viewer-<tag>-windows-x64.zip` and refuses a package
+  with files it doesn't know. Each release also carries that zip, holding the viewer itself as `aurora-viewer.exe`.
+  The new updater accepts an install under either name (`install::LEGACY_EXE`) and moves it to the new package on the
+  next update. Drop the bridge zip once no one is on 0.9.8 (a few releases).
+- Kept on purpose: `aurora-update-policy.json` (0.9.8's updater reads that name), the Linux desktop id
+  `aurora-viewer` (window matching), the macOS bundle's inner executable, and Aurora's media plugin pack names.

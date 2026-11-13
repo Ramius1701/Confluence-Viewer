@@ -90,7 +90,7 @@ fn windows_resources() {
     res.set_icon(&icon.to_string_lossy())
         .set("ProductName", "Confluence Viewer")
         .set("FileDescription", "Confluence Viewer")
-        .set("OriginalFilename", "aurora-viewer.exe")
+        .set("OriginalFilename", "confluence-viewer.exe")
         .set("ProductVersion", &display)
         .set("FileVersion", &display)
         .set_version_info(winresource::VersionInfo::PRODUCTVERSION, packed)

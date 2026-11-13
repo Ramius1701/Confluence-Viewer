@@ -120,7 +120,7 @@ function Get-Checks($P, [switch]$Offline) {
     & $add (New-Check identity 'Git identity' $email $(if ($email) { 'ok' } else { 'todo' }) $(if ($email) { 'nothing to do' } else { 'your GitHub username + noreply address' }))
 
     # the --release viewer of RELEASE\ (menu "Release viewer"): information only
-    $version = Join-Path $P.Release 'Aurora-Viewer\version.txt'
+    $version = Join-Path $P.Release 'Confluence-Viewer\version.txt'
     if ($hasRepo -and (Test-Path $version)) {
         # the line after the reported version: "main: <short sha> <subject> (<date>)",
         # or "PR #42: …" (files written before the switch to English: "main : …")

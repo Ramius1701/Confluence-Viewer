@@ -64,6 +64,8 @@ jobs:
           if ($env:TAG -ne 'dry-run') { $env:AURORA_VERSION_TAG = $env:TAG }
           # the OpenXR loader built in: the published exe needs nothing beside it
           cargo build --release --locked -p aurora-viewer --features xr-static-loader
+          # aurora-viewer.exe of the package: starts confluence-viewer.exe
+          cargo build --release --locked -p confluence-launcher
       - name: Verify compiled version
         if: env.TAG != 'dry-run'
         shell: pwsh
@@ -79,7 +81,7 @@ jobs:
         run: |
           dump_syms target/release/aurora-viewer.exe --store symbols
           if ($LASTEXITCODE -ne 0) { throw 'dump_syms failed' }
-          $zip = "Aurora-Viewer-$env:TAG-windows-x64-symbols.zip"
+          $zip = "Confluence-Viewer-$env:TAG-windows-x64-symbols.zip"
           & 7z a -tzip -mx=9 $zip ./symbols/* | Out-Null
           if ($LASTEXITCODE -ne 0) { throw '7z failed' }
           $hash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -92,13 +94,24 @@ jobs:
         shell: pwsh
         run: |
           $v = $env:TAG
-          $dir = "Aurora-Viewer-$v-windows-x64"
-          ./scripts/package.ps1 -Exe target/release/aurora-viewer.exe -Out $dir
+          # the package: confluence-viewer.exe, and the launcher under
+          # Aurora's name for the shortcuts made before the rename
+          $dir = "Confluence-Viewer-$v-windows-x64"
+          ./scripts/package.ps1 -Exe target/release/aurora-viewer.exe -Out $dir -Launcher target/release/confluence-launcher.exe
           Compress-Archive -Path $dir -DestinationPath "$dir.zip"
           $hash = (Get-FileHash -LiteralPath "$dir.zip" -Algorithm SHA256).Hash.ToLowerInvariant()
           "$hash  $dir.zip" | Set-Content -LiteralPath "$dir.zip.sha256" -Encoding utf8NoBOM
+          # the bridge: the same viewer under Aurora's names, the only ones the
+          # updater of Confluence 0.9.8 looks for and installs (it refuses a
+          # package with files it does not know, so no launcher in it)
+          $bridge = "Aurora-Viewer-$v-windows-x64"
+          ./scripts/package.ps1 -Exe target/release/aurora-viewer.exe -Out $bridge -ExeName aurora-viewer.exe
+          Compress-Archive -Path $bridge -DestinationPath "$bridge.zip"
+          $hash = (Get-FileHash -LiteralPath "$bridge.zip" -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $bridge.zip" | Set-Content -LiteralPath "$bridge.zip.sha256" -Encoding utf8NoBOM
           ./scripts/write-update-policy.ps1 -Tag $v
           "ZIP=$dir.zip" >> $env:GITHUB_ENV
+          "BRIDGE=$bridge.zip" >> $env:GITHUB_ENV
       # what the publish job puts in the release
       - name: Release files
         if: env.TAG != 'dry-run'
@@ -108,6 +121,8 @@ jobs:
           path: |
             ${{ env.ZIP }}
             ${{ env.ZIP }}.sha256
+            ${{ env.BRIDGE }}
+            ${{ env.BRIDGE }}.sha256
             ${{ env.SYMBOLS }}
             ${{ env.SYMBOLS }}.sha256
             aurora-update-policy.json
@@ -151,9 +166,10 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           $v = $env:TAG
-          $zip = "Aurora-Viewer-$v-windows-x64.zip"
-          $symbols = "Aurora-Viewer-$v-windows-x64-symbols.zip"
-          $ghArgs = @($v, $zip, "$zip.sha256", $symbols, "$symbols.sha256", 'aurora-update-policy.json', '--title', "Confluence Viewer $v", '--notes-file', '.github/release-notes-header.md', '--generate-notes', '--verify-tag')
+          $zip = "Confluence-Viewer-$v-windows-x64.zip"
+          $bridge = "Aurora-Viewer-$v-windows-x64.zip"   # for installs of 0.9.8
+          $symbols = "Confluence-Viewer-$v-windows-x64-symbols.zip"
+          $ghArgs = @($v, $zip, "$zip.sha256", $bridge, "$bridge.sha256", $symbols, "$symbols.sha256", 'aurora-update-policy.json', '--title', "Confluence Viewer $v", '--notes-file', '.github/release-notes-header.md', '--generate-notes', '--verify-tag')
           if ($v -match '-') { $ghArgs += '--prerelease' }   # v0.3.0-beta.1
           gh release create @ghArgs
 
@@ -200,7 +216,7 @@ jobs:
         shell: pwsh
         run: |
           $v = $env:TAG
-          $dir = "Aurora-Viewer-$v-linux-x64"
+          $dir = "Confluence-Viewer-$v-linux-x64"
           ./scripts/package.ps1 -Exe target/release/aurora-viewer -Out $dir
           & tar -czf "$dir.tar.gz" $dir
           if ($LASTEXITCODE -ne 0) { throw 'tar failed' }
@@ -245,7 +261,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
         run: |
-          archive="Aurora-Viewer-$TAG-linux-x64.tar.gz"
+          archive="Confluence-Viewer-$TAG-linux-x64.tar.gz"
           gh release upload "$TAG" "$archive" "$archive.sha256"
 
   # The macOS application (Apple Silicon) joins the release like the Linux
@@ -338,7 +354,7 @@ jobs:
       # signature (and its stapled ticket)
       - name: Disk image
         run: |
-          dmg="Aurora-Viewer-$TAG-macos-arm64.dmg"
+          dmg="Confluence-Viewer-$TAG-macos-arm64.dmg"
           stage="$RUNNER_TEMP/dmg"
           mkdir -p "$stage"
           ditto "$APP" "$stage/$APP"
@@ -384,5 +400,5 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
         run: |
-          dmg="Aurora-Viewer-$TAG-macos-arm64.dmg"
+          dmg="Confluence-Viewer-$TAG-macos-arm64.dmg"
           gh release upload "$TAG" "$dmg" "$dmg.sha256"

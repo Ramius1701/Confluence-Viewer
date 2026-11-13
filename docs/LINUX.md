@@ -44,23 +44,23 @@ Plus the Vulkan driver of your graphics card if it is not there yet:
 ## 2. Download and extract
 
 From the [latest release](https://github.com/Aurora-Viewer/Aurora-Viewer/releases/latest),
-download `Aurora-Viewer-vX.Y.Z-linux-x64.tar.gz` and its `.sha256` file into
+download `Confluence-Viewer-vX.Y.Z-linux-x64.tar.gz` and its `.sha256` file into
 the same folder, then:
 
 ```bash
-sha256sum -c Aurora-Viewer-vX.Y.Z-linux-x64.tar.gz.sha256
-tar -xzf Aurora-Viewer-vX.Y.Z-linux-x64.tar.gz
+sha256sum -c Confluence-Viewer-vX.Y.Z-linux-x64.tar.gz.sha256
+tar -xzf Confluence-Viewer-vX.Y.Z-linux-x64.tar.gz
 ```
 
-The archive holds one folder, `Aurora-Viewer-vX.Y.Z-linux-x64`, with the
-viewer (`aurora-viewer`), its desktop entry and icon, its licences and the
+The archive holds one folder, `Confluence-Viewer-vX.Y.Z-linux-x64`, with the
+viewer (`confluence-viewer`), its desktop entry and icon, its licences and the
 README. Move it where you like, for example `~/.local/opt/aurora-viewer`.
 
 ## 3. Start the viewer
 
 ```bash
-cd Aurora-Viewer-vX.Y.Z-linux-x64
-./aurora-viewer
+cd Confluence-Viewer-vX.Y.Z-linux-x64
+./confluence-viewer
 ```
 
 To start it from your desktop's menu, with its icon in the panel and the
@@ -72,7 +72,7 @@ works:
 ```bash
 install -Dm644 aurora-viewer.svg ~/.local/share/icons/hicolor/scalable/apps/aurora-viewer.svg
 mkdir -p ~/.local/share/applications
-exe=$(printf '%s' "$PWD/aurora-viewer" | sed -e 's/[\\"`$]/\\&/g' -e 's/\\/\\\\/g' -e 's/%/%%/g')
+exe=$(printf '%s' "$PWD/confluence-viewer" | sed -e 's/[\\"`$]/\\&/g' -e 's/\\/\\\\/g' -e 's/%/%%/g')
 EXEC="\"$exe\"" awk '/^Exec=/ { print "Exec=" ENVIRON["EXEC"]; next } 1' aurora-viewer.desktop > ~/.local/share/applications/aurora-viewer.desktop
 ```
 

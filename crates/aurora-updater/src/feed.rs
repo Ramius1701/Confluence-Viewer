@@ -11,6 +11,10 @@ use std::time::Duration;
 pub const RELEASES: &str = "https://api.github.com/repos/Ramius1701/Confluence-Viewer/releases?per_page=100";
 pub const RELEASE_PAGE: &str = "https://github.com/Ramius1701/Confluence-Viewer/releases";
 const DOWNLOADS: &str = "https://github.com/Ramius1701/Confluence-Viewer/releases/download";
+/// Start of the release archives' names and of the folder inside the Windows
+/// zip: `Confluence-Viewer-<tag>-windows-x64.zip`. Releases also carry an
+/// `Aurora-Viewer-…` copy for installs of 0.9.8 (`install::LEGACY_EXE`).
+pub(crate) const PACKAGE: &str = "Confluence-Viewer";
 pub const POLICY: &str = "aurora-update-policy.json";
 pub const MAX_ARCHIVE: u64 = 2 * 1024 * 1024 * 1024;
 /// How long an installation below a new minimum may still sign in, when
@@ -205,7 +209,7 @@ impl Source {
             return Ok(None);
         }
         self.validate_url(&r.html_url)?;
-        let expected = format!("Aurora-Viewer-{}-windows-x64.zip", r.tag_name);
+        let expected = format!("{PACKAGE}-{}-windows-x64.zip", r.tag_name);
         let archive = r
             .assets
             .iter()

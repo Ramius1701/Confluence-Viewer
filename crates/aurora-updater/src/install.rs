@@ -10,7 +10,16 @@ use std::{
     time::{Duration, Instant},
 };
 
-const EXE: &str = "aurora-viewer.exe";
+/// The viewer's executable in a Confluence Viewer package.
+pub(crate) const EXE: &str = "confluence-viewer.exe";
+/// Aurora Viewer's name for it. Installs of Confluence 0.9.8 have the viewer
+/// under this name, and their updater only installs a package that has it:
+/// the release's bridge zip carries the viewer under this name, and the
+/// regular package carries a small launcher under it (`confluence-launcher`)
+/// so that shortcuts and pinned icons made before the rename keep working.
+/// Either one may be the running viewer while an install moves to the new
+/// name, so both are accepted wherever the running executable is checked.
+pub(crate) const LEGACY_EXE: &str = "aurora-viewer.exe";
 const ACK_ENV: &str = "AURORA_UPDATE_ACK";
 /// Written by the new viewer once its startup splash is on screen: the
 /// helper's own update window can then go without a gap.
@@ -36,6 +45,7 @@ pub enum HelperStage {
 }
 const ALLOWED: &[&str] = &[
     EXE,
+    LEGACY_EXE,
     "assets",
     "LICENSE",
     "NOTICE.md",
@@ -81,6 +91,18 @@ pub(crate) fn plain_dir(path: &Path) -> Result<()> {
     Ok(())
 }
 
+/// The viewer to launch in `install`: [`EXE`], or Aurora's name in an
+/// install made before the rename ([`LEGACY_EXE`]).
+fn viewer_exe(install: &Path) -> PathBuf {
+    let exe = install.join(EXE);
+    if exe.is_file() { exe } else { install.join(LEGACY_EXE) }
+}
+
+/// Whether `exe` (canonical) is the viewer of `install`, under either name.
+fn is_viewer_exe(install: &Path, exe: &Path) -> bool {
+    [EXE, LEGACY_EXE].iter().any(|name| exe == install.join(name))
+}
+
 fn validate_install(install: &Path) -> Result<()> {
     ensure!(
         install.is_absolute() && install.parent().is_some_and(|p| p.parent().is_some()),
@@ -97,7 +119,9 @@ fn validate_install(install: &Path) -> Result<()> {
         ensure!(!entry.file_type()?.is_symlink(), "package entry is a link");
     }
     ensure!(
-        install.join(EXE).is_file() && install.join("assets").is_dir() && install.join("LICENSE").is_file(),
+        (install.join(EXE).is_file() || install.join(LEGACY_EXE).is_file())
+            && install.join("assets").is_dir()
+            && install.join("LICENSE").is_file(),
         "viewer is not installed as a portable package"
     );
     // A directory junction nested in the assets must never be followed by cleanup.
@@ -149,7 +173,7 @@ impl Workspace {
     /// Called on a worker; copies the helper before the viewer shuts down.
     pub fn handoff(mut self, version: &str, maintenance: crate::Maintenance) -> Result<()> {
         let exe = std::env::current_exe()?.canonicalize()?;
-        ensure!(exe == self.install.join(EXE), "updater is not running from its installation");
+        ensure!(is_viewer_exe(&self.install, &exe), "updater is not running from its installation");
         fs::copy(&exe, self.root.join("helper.exe"))?;
         let args: Vec<String> = std::env::args_os()
             .skip(1)
@@ -317,8 +341,9 @@ pub fn run_helper(stage: &mut dyn FnMut(&str, HelperStage)) -> Result<bool> {
         fs::write(work.join("failure.txt"), format!("{error:#}"))?;
         // `apply` restored the directory; launch the old viewer with a visible
         // localized rollback notice. Backups are retained if restoration failed.
-        if plan.install.join(EXE).is_file() && !work.join("backup").exists() {
-            let mut command = Command::new(plan.install.join(EXE));
+        let restored = viewer_exe(&plan.install);
+        if restored.is_file() && !work.join("backup").exists() {
+            let mut command = Command::new(restored);
             command
                 .args(&plan.args)
                 .env("AURORA_UPDATE_ROLLBACK", "1")
@@ -438,7 +463,7 @@ pub fn acknowledge_frame() {
             let plan: Plan = serde_json::from_slice(&fs::read(work.join("plan.json"))?)?;
             validate_work(&work, &plan)?;
             ensure!(
-                plan.version == aurora_version::version() && std::env::current_exe()?.canonicalize()? == plan.install.join(EXE),
+                plan.version == aurora_version::version() && is_viewer_exe(&plan.install, &std::env::current_exe()?.canonicalize()?),
                 "update acknowledgement mismatch"
             );
             fs::write(work.join("first-frame"), format!("{}\n{}", plan.token, plan.version))?;

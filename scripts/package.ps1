@@ -6,19 +6,31 @@
     runs it too (PowerShell 7), with the executable without extension.
 
 .EXAMPLE
-    ./scripts/package.ps1 -Exe target/release/aurora-viewer.exe -Out Aurora-Viewer
+    ./scripts/package.ps1 -Exe target/release/aurora-viewer.exe -Out Confluence-Viewer -Launcher target/release/confluence-launcher.exe
 .EXAMPLE
-    ./scripts/package.ps1 -Exe target/release/aurora-viewer -Out Aurora-Viewer-v0.8.0-linux-x64
+    ./scripts/package.ps1 -Exe target/release/aurora-viewer -Out Confluence-Viewer-v0.8.0-linux-x64
+.EXAMPLE
+    # the bridge for installs of 0.9.8: the viewer under Aurora's name, no launcher
+    ./scripts/package.ps1 -Exe target/release/aurora-viewer.exe -Out Aurora-Viewer-v0.9.9-windows-x64 -ExeName aurora-viewer.exe
 #>
 param(
     [Parameter(Mandatory)][string]$Exe,
     [Parameter(Mandatory)][string]$Out,
+    # the viewer's name in the package: Cargo builds aurora-viewer(.exe), the
+    # package ships confluence-viewer(.exe) (aurora-updater install::EXE)
+    [string]$ExeName = $(if ([IO.Path]::GetExtension($Exe)) { 'confluence-viewer.exe' } else { 'confluence-viewer' }),
+    # Windows: confluence-launcher.exe, shipped as aurora-viewer.exe so that
+    # shortcuts made before the rename still start the viewer
+    [string]$Launcher,
     # repository whose assets go with the exe (default: this script's)
     [string]$Source = (Split-Path $PSScriptRoot -Parent)
 )
 
 New-Item -ItemType Directory -Force -Path (Join-Path $Out 'assets/emoji') -ErrorAction Stop | Out-Null
-Copy-Item -LiteralPath $Exe -Destination $Out -ErrorAction Stop
+Copy-Item -LiteralPath $Exe -Destination (Join-Path $Out $ExeName) -ErrorAction Stop
+if ($Launcher) {
+    Copy-Item -LiteralPath $Launcher -Destination (Join-Path $Out 'aurora-viewer.exe') -ErrorAction Stop
+}
 # The emoji font is inside the exe; its licence ships, and the assets folder
 # stays: the updater of the published versions refuses a package without it.
 Copy-Item -LiteralPath (Join-Path $Source 'assets/emoji/LICENSE-OFL.txt') -Destination (Join-Path $Out 'assets/emoji') -ErrorAction Stop

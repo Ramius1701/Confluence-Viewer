@@ -455,7 +455,7 @@ for the format of the packages and their policy.
 | Conversation history (text files, per account and per grid; Preferences › Chat to open it, turn it off or erase it) | `%APPDATA%\Aurora\AuroraViewer\config\accounts\<account uuid>\chat_logs\<grid>\` |
 | Cache (textures, mesh…) — can be deleted safely | `%LOCALAPPDATA%\Aurora\AuroraViewer\cache\` |
 | Logs (to send to an agent after a test) | `%LOCALAPPDATA%\Aurora\AuroraViewer\data\logs\` |
-| `--release` viewer of the latest `main` | `RELEASE\Aurora-Viewer\aurora-viewer.exe`, in the project folder |
+| `--release` viewer of the latest `main` | `RELEASE\Confluence-Viewer\confluence-viewer.exe`, in the project folder |
 | Program built by hand | `target\debug\aurora-viewer.exe` (or `work\<task>\target\debug\`) |
 
 `aurora.log` is the log of your last real session; the session before is kept

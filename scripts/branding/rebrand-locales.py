@@ -49,6 +49,8 @@ WORD = re.compile(r"(?<![A-Za-z])Aurora(?![A-Za-z])")
 
 
 def rename(text):
+    # the program's file name (scripts/package.ps1 ships confluence-viewer.exe)
+    text = text.replace("aurora-viewer.exe", "confluence-viewer.exe")
     held = {}
     for i, phrase in enumerate(PROTECT_PHRASES):
         token = f"\x00{i}\x00"
