@@ -155,7 +155,7 @@ function Invoke-Disk {
 }
 
 function Invoke-Logs {
-    $dir = Join-Path $env:LOCALAPPDATA 'Aurora\AuroraViewer\data\logs'
+    $dir = Join-Path $env:LOCALAPPDATA 'Confluence\ConfluenceViewer\data\logs'
     Write-Title "Viewer logs ($dir)"
     $logs = @(Get-ChildItem -LiteralPath $dir -Filter *.log -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 8)
     if (-not $logs) { Write-Color '  No log yet.' muted; Wait-Back; return }
