@@ -28,6 +28,8 @@ PROTECT_PHRASES = [
     "Aurora Démo", "Aurora LiveMesh", "Aurora Lagoon", "Aurora AO", "Aurora water", "Aurora silhouette", "Aurora 3D",
     "Aurora Team", "Aurora Club", "Aurora Builders", "Aurora media", "Aurora skin", "Aurora hair", "Aurora beach",
     "Aurora Beach", "Aurora lantern", "Aurora experience",
+    # a feature that regions set for every viewer (environment codes)
+    "Aurora Weather", "Aurora weather", "Météo Aurora", "météo Aurora", "Aurora の天気",
 ]
 # Whole values replaced by key, in every catalogue (the key's own language).
 OVERRIDES = {

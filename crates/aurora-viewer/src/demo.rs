@@ -16,6 +16,8 @@ use uuid::Uuid;
 pub mod anti_spam;
 #[path = "demo_beacons.rs"]
 pub mod beacons;
+#[path = "demo_beams.rs"]
+pub mod beams;
 #[path = "demo_parcel_visibility.rs"]
 pub mod parcel_visibility;
 #[path = "demo_pointing.rs"]
@@ -29,7 +31,7 @@ pub mod texture_library;
 #[path = "demo_water.rs"]
 pub mod water;
 
-const HANDLE: u64 = (256000u64 << 32) | 256000;
+pub(crate) const HANDLE: u64 = (256000u64 << 32) | 256000;
 
 /// AURORA_DEMO_AA_SWITCH: the anti-aliasing changed at given frames.
 #[path = "demo_aa_switch.rs"]
@@ -53,6 +55,9 @@ pub mod asset_server;
 pub mod attention;
 #[path = "demo_auto_hover.rs"]
 pub mod auto_hover;
+/// Face nearest avatar and the Compass (AURORA_DEMO_AVATAR_ALIGN).
+#[path = "demo_avatar_align.rs"]
+pub mod avatar_align;
 /// Blended panes standing in the sun, for their shadows
 /// (AURORA_DEMO_BLEND_SHADOWS).
 #[path = "demo_blend_shadows.rs"]
@@ -169,6 +174,10 @@ pub mod link;
 /// A Mask of cutoff 255 over an alpha just under opaque (AURORA_DEMO_MASK_255).
 #[path = "demo_mask_255.rs"]
 pub mod mask_255;
+/// The plaza's mirror, and blended faces in front of it
+/// (AURORA_DEMO_MIRROR).
+#[path = "demo_mirror.rs"]
+pub mod mirror;
 #[path = "demo_missing_texture.rs"]
 pub mod missing_texture;
 /// The real or the Legacy Viewer's night sky, the camera on the stars
@@ -183,6 +192,9 @@ pub mod notifs;
 /// not (AURORA_DEMO_OBJECT_CHAT).
 #[path = "demo_object_chat.rs"]
 pub mod object_chat;
+/// The garden lamp of the object export scenario (AURORA_DEMO_OBJECT_EXPORT).
+#[path = "demo_object_export.rs"]
+pub mod object_export;
 /// Objects' messages from near and far, filtered (AURORA_DEMO_OBJECT_IM).
 #[path = "demo_object_im.rs"]
 pub mod object_im;
@@ -305,6 +317,10 @@ pub mod tortured_prims;
 /// Fast camera turns (AURORA_DEMO_TURN).
 #[path = "demo_turn.rs"]
 pub mod turn;
+/// A hall hung with lace curtains crossing one another, and glowing
+/// strings among them (AURORA_DEMO_VEILS).
+#[path = "demo_veils.rs"]
+pub mod veils;
 /// The Voice controls window with residents in the nearby channel
 /// (AURORA_DEMO_VOICE_CONTROLS).
 #[path = "demo_voice_controls.rs"]
@@ -750,6 +766,32 @@ pub fn first_person_eye_animation() -> aurora_assets::Animation {
             })
             .collect(),
         pos_keys: Vec::new(),
+    });
+    animation
+}
+
+/// A looping joint translation for third-person bone-camera captures.
+pub fn third_person_joint_animation(joint_name: &str, joint_rest: Vec3, axis: Vec3) -> aurora_assets::Animation {
+    use aurora_assets::anim::{JointMotion, PosKey};
+    let mut animation = idle_animation();
+    animation.base_priority = 6;
+    animation.duration = 2.0;
+    animation.loop_in = 0.0;
+    animation.loop_out = 2.0;
+    animation.ease_in = 0.0;
+    animation.ease_out = 0.0;
+    animation.joints.clear();
+    animation.joints.push(JointMotion {
+        joint_name: joint_name.into(),
+        priority: 5,
+        rot_keys: Vec::new(),
+        pos_keys: [(0.0, 0.0), (0.5, 0.22), (1.0, 0.0), (1.5, -0.12), (2.0, 0.0)]
+            .into_iter()
+            .map(|(time, z)| PosKey {
+                time,
+                position: joint_rest + axis * z,
+            })
+            .collect(),
     });
     animation
 }
@@ -1234,6 +1276,7 @@ pub fn bubbles_events() -> Vec<NetEvent> {
                 aurora_net::ChatSourceType::Agent
             },
             chat_type: aurora_net::ChatType::Normal,
+            region: Some(HANDLE),
             position: Vec3::ZERO,
             message: text.into(),
         })
@@ -1343,6 +1386,7 @@ fn chat_lines_said() -> Vec<NetEvent> {
                 aurora_net::ChatSourceType::Agent
             },
             chat_type,
+            region: Some(HANDLE),
             position: Vec3::ZERO,
             message: text.into(),
         })
@@ -1951,6 +1995,7 @@ pub fn aurora_events(scene: &AuroraScene) -> Vec<NetEvent> {
             owner_id: Uuid::nil(),
             source_type: aurora_net::ChatSourceType::Agent,
             chat_type,
+            region: Some(HANDLE),
             position: Vec3::ZERO,
             message: text,
         })
@@ -2430,6 +2475,7 @@ fn long_name_events(agent: Uuid) -> Vec<NetEvent> {
             owner_id: Uuid::nil(),
             source_type: aurora_net::ChatSourceType::Agent,
             chat_type: aurora_net::ChatType::Normal,
+            region: Some(HANDLE),
             position: Vec3::ZERO,
             message: aurora_i18n::tr!("demo-hi-everyone-we-re-building-the-plaza-tonight").into(),
         }),
@@ -3388,6 +3434,7 @@ pub fn demo_reply(cmd: &aurora_net::NetCommand) -> Vec<NetEvent> {
                 owner_id: DEMO_AGENT,
                 source_type: aurora_net::ChatSourceType::Object,
                 chat_type: aurora_net::ChatType::OwnerSay,
+                region: Some(HANDLE),
                 position: Vec3::ZERO,
                 message: aurora_i18n::tr!(
                     "demo-channel-listener-heard",
@@ -3403,6 +3450,7 @@ pub fn demo_reply(cmd: &aurora_net::NetCommand) -> Vec<NetEvent> {
             owner_id: Uuid::from_u128(0xA0E0_A6E1_0000_0000_0000_0000_0000_0001),
             source_type: aurora_net::ChatSourceType::Agent,
             chat_type: *chat_type,
+            region: Some(HANDLE),
             position: Vec3::new(132.0, 126.0, 30.0),
             message: message.clone(),
         })],
@@ -4397,6 +4445,7 @@ pub fn events() -> Vec<NetEvent> {
             billable_factor: 1.0,
         })),
     ];
+    ev.extend(group::simulator_features());
     // parcel overlay (mini-map property lines): four parcels split at
     // x = y = 128 m and a for-sale lot in the south-east corner
     let mut cells = vec![1u8; 64 * 64];
@@ -5526,38 +5575,11 @@ pub fn events() -> Vec<NetEvent> {
     // 10 cm panel through that plane, its face 5 cm in front of it, where
     // the Legacy Viewer gives it almost the whole mirror (tapHeroProbe)
     {
-        let probe = aurora_prim::extra::ReflectionProbeParams {
-            ambiance: 0.0,
-            clip_distance: 0.0,
-            flags: 0x1 | 0x4,
-        };
-        let rot = Quat::from_rotation_z(-1.2) * Quat::from_rotation_x(std::f32::consts::FRAC_PI_2);
-        let center = Vec3::new(cx + 2.0, cy - 9.0, g(cx, cy) + 2.0);
-        add(prim(
-            id,
-            center,
-            rot,
-            Vec3::new(3.4, 3.0, 1.0),
-            boxp,
-            te([1.0, 1.0, 1.0, 0.0], 0, false, 0.0),
-            ExtraParams {
-                reflection_probe: Some(probe),
-                ..Default::default()
-            },
-            "",
-        ));
-        id += 1;
-        add(prim(
-            id,
-            center,
-            rot,
-            Vec3::new(3.0, 2.6, 0.1),
-            boxp,
-            te([0.85, 0.87, 0.9, 1.0], 3, false, 0.0),
-            ExtraParams::default(),
-            "",
-        ));
-        id += 1;
+        let (center, rot) = mirror::placement();
+        for o in mirror::mirror(id, center, rot, [0.85, 0.87, 0.9, 1.0]) {
+            add(o);
+        }
+        id += 2;
     }
     // AURORA_DEMO_PROBES=1: two manual reflection probes on the plaza, as
     // invisible prims: a box turned on itself, which the crowd's camera
@@ -5692,6 +5714,12 @@ pub fn events() -> Vec<NetEvent> {
             add(o);
         }
         id += wet_layer::COUNT;
+    }
+    if mirror::enabled() {
+        for o in mirror::objects(id) {
+            add(o);
+        }
+        id += mirror::COUNT;
     }
     // AURORA_DEMO_HALO: a wide translucent pane 3 m ahead of the start
     // position, facing the camera, so that the avatar stands between the
@@ -5953,6 +5981,12 @@ pub fn events() -> Vec<NetEvent> {
         Some(p) if p.len() >= 2 => Vec3::new(p[0], p[1], height(p[0], p[1]).max(20.0) + 1.0),
         _ => start,
     };
+    // AURORA_DEMO_MIRROR: in front of the mirror, facing it
+    let (start, look_at) = if mirror::enabled() {
+        mirror::start()
+    } else {
+        (start, Vec3::new(0.8, 0.4, 0.0))
+    };
     ev.push(NetEvent::ObjectUpdates {
         handle: HANDLE,
         objects: avatars,
@@ -5960,7 +5994,7 @@ pub fn events() -> Vec<NetEvent> {
     ev.push(NetEvent::AgentMovementComplete {
         handle: HANDLE,
         position: start,
-        look_at: Vec3::new(0.8, 0.4, 0.0),
+        look_at,
     });
     // the parcel the demo avatar stands on (About Land)
     {
@@ -6090,6 +6124,7 @@ pub fn events() -> Vec<NetEvent> {
         owner_id: Uuid::nil(),
         source_type: aurora_net::ChatSourceType::Agent,
         chat_type: aurora_net::ChatType::Normal,
+        region: Some(HANDLE),
         position: Vec3::ZERO,
         message: aurora_i18n::tr!("demo-welcome-to-the-aurora-viewer-demo").into(),
     }));
@@ -6114,6 +6149,7 @@ pub fn events() -> Vec<NetEvent> {
                 owner_id: agent,
                 source_type: aurora_net::ChatSourceType::Object,
                 chat_type: aurora_net::ChatType::OwnerSay,
+                region: Some(HANDLE),
                 position: Vec3::ZERO,
                 message: text.into(),
             }));
@@ -6174,6 +6210,7 @@ pub fn events() -> Vec<NetEvent> {
     ev.extend(sculpt::events());
     ev.extend(plants::events());
     ev.extend(blend_shadows::events());
+    ev.extend(veils::events());
     ev.extend(alpha_mask_ab::events());
     ev.extend(tortured_prims::events());
     ev.extend(bom_rezzed::events());
@@ -6539,6 +6576,17 @@ pub fn demo_media_page() -> &'static str {
 /// west face (towards the avatar) carries media. Returns the update, the
 /// object id and the face index.
 pub fn media_screen() -> (NetEvent, Uuid, u8) {
+    media_screen_at(900, 135.5, 129.5)
+}
+
+/// AURORA_DEMO_NEARBY_MEDIA: the other screens, the same as
+/// [`media_screen`]: one further north in the plaza's parcel, one outside
+/// it (east of x = 192 m).
+pub fn nearby_media_screens() -> [(NetEvent, Uuid, u8); 2] {
+    [media_screen_at(901, 141.5, 137.5), media_screen_at(902, 196.0, 129.5)]
+}
+
+fn media_screen_at(n: u32, x: f32, y: f32) -> (NetEvent, Uuid, u8) {
     let boxp = shape(LL_PCODE_PATH_LINE, LL_PCODE_PROFILE_SQUARE, 100, 0, 0);
     // the box face looking down -X
     let mesh = aurora_prim::generate_volume(&boxp, 1.0);
@@ -6564,9 +6612,8 @@ pub fn media_screen() -> (NetEvent, Uuid, u8) {
     f.media_flags |= 1;
     f.scale_t = 576.0 / 1024.0;
     f.offset_t = -(1.0 - f.scale_t) * 0.5;
-    let (x, y) = (135.5, 129.5);
     let o = prim(
-        900,
+        n,
         Vec3::new(x, y, floor_at(x, y) + 1.9),
         Quat::IDENTITY,
         Vec3::new(0.1, 4.0, 2.25),
@@ -8908,6 +8955,9 @@ pub fn local_texture(id: &Uuid) -> Option<(Vec<u8>, u32, u32)> {
     if let Some(texture) = wet_layer::texture(id) {
         return Some(texture);
     }
+    if let Some(texture) = mirror::texture(id) {
+        return Some(texture);
+    }
     if *id == hud::TEX_MASK_PANEL {
         return Some(hud::mask_cutoff_texture());
     }
@@ -8959,6 +9009,9 @@ pub fn local_texture(id: &Uuid) -> Option<(Vec<u8>, u32, u32)> {
     }
     if let Some(pane) = blend_shadows::texture(id) {
         return Some(pane);
+    }
+    if let Some(lace) = veils::texture(id) {
+        return Some(lace);
     }
     if let Some(picture) = tags::picture_pixels(id) {
         return Some(picture);

@@ -211,3 +211,7 @@ users download and run:
   next update. Drop the bridge zip once no one is on 0.9.8 (a few releases).
 - Kept on purpose: `aurora-update-policy.json` (0.9.8's updater reads that name), the Linux desktop id
   `aurora-viewer` (window matching), the macOS bundle's inner executable, and Aurora's media plugin pack names.
+- 2026-11-15: merged 39 more upstream commits (Aurora Weather, 1024 m draw distance, Collada/OBJ export, SLua editor).
+  `install.rs` kept both sides (our exe names, upstream's drive-root check). "Aurora Weather" keeps its name in every
+  language: regions set it for all viewers, like "Aurora water" (protected in `rebrand-locales.py`). Exported models
+  name Confluence Viewer as their authoring tool.
