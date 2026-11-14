@@ -51,7 +51,7 @@ macOS remembers the choice: the next starts are normal. In the Terminal,
 this command does the same, once the application is in Applications:
 
 ```bash
-xattr -dr com.apple.quarantine "/Applications/Aurora Viewer.app"
+xattr -dr com.apple.quarantine "/Applications/Confluence Viewer.app"
 ```
 
 Until the releases are notarized, macOS may also ask again, after an
@@ -153,7 +153,7 @@ cargo build --release --locked -p aurora-viewer
 
 `AURORA_DEMO=1 ./target/release/aurora-viewer` starts the offline demo,
 without the network. To build the application itself as the release does,
-run `pwsh ./scripts/package-macos.ps1 -Exe target/release/aurora-viewer -Out "Aurora Viewer.app"`
+run `pwsh ./scripts/package-macos.ps1 -Exe target/release/aurora-viewer -Out "Confluence Viewer.app"`
 (PowerShell 7: `brew install powershell`). The same PowerShell runs the local
 checks: `pwsh -File ./scripts/check.ps1` (formatting, clippy, tests).
 

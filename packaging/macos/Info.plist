@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<!-- Aurora Viewer.app: scripts/package-macos.ps1 replaces @VERSION@ with the
+<!-- Confluence Viewer.app: scripts/package-macos.ps1 replaces @VERSION@ with the
      viewer's MAJOR.MINOR.PATCH. The texts shown to the user are translated
      in the .lproj folders next to this file. -->
 <plist version="1.0">

@@ -265,7 +265,7 @@ jobs:
           gh release upload "$TAG" "$archive" "$archive.sha256"
 
   # The macOS application (Apple Silicon) joins the release like the Linux
-  # archive: "Aurora Viewer.app" in a disk image, next to a link to
+  # archive: "Confluence Viewer.app" in a disk image, next to a link to
   # Applications to drag it onto, as Mac applications are installed. Signed with the Developer ID, then notarized and stapled,
   # when the repository has the Apple secrets (docs/MACOS.md, "Signing");
   # signed ad hoc otherwise, which macOS opens only after "Open Anyway" in
@@ -277,7 +277,7 @@ jobs:
     runs-on: macos-15
     env:
       TAG: ${{ inputs.tag || github.event_name == 'push' && github.ref_name || 'dry-run' }}
-      APP: Aurora Viewer.app
+      APP: Confluence Viewer.app
       # never on a pull request: its dry run signs ad hoc
       SIGNED: ${{ github.event_name != 'pull_request' && secrets.MACOS_CERTIFICATE_P12 != '' && secrets.APPLE_API_KEY_P8 != '' }}
     steps:
@@ -359,7 +359,7 @@ jobs:
           mkdir -p "$stage"
           ditto "$APP" "$stage/$APP"
           ln -s /Applications "$stage/Applications"
-          hdiutil create -volname "Aurora Viewer" -srcfolder "$stage" -fs HFS+ -format UDZO -ov "$dmg"
+          hdiutil create -volname "Confluence Viewer" -srcfolder "$stage" -fs HFS+ -format UDZO -ov "$dmg"
           shasum -a 256 "$dmg" > "$dmg.sha256"
           echo "ARCHIVE=$dmg" >> "$GITHUB_ENV"
       - name: Release files
