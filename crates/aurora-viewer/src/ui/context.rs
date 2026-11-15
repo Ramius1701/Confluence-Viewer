@@ -54,6 +54,7 @@ pub mod flags {
     /// FLAGS_AFFECTS_NAVMESH: flagObjectPermanent.
     pub const AFFECTS_NAVMESH: u32 = 1 << 12;
     pub const OBJECT_TRANSFER: u32 = 1 << 17;
+    pub const OBJECT_GROUP_OWNED: u32 = 1 << 18;
 }
 
 #[derive(Debug, Clone)]
@@ -593,6 +594,15 @@ pub enum CtxAction {
     /// "New contact set…" of an "Add to contact set" submenu: its name
     /// asked (AddNewContactSet), then these residents added to it.
     NewContactSet(Vec<Uuid>),
+    /// Mark ▸ a colour of the radar and mini-map menus
+    /// (Nearby.People.SetAvatarMarkColor, Minimap.Mark).
+    MarkAvatars(Vec<Uuid>, crate::world::avatar_marks::Rgb),
+    /// Mark ▸ Custom color…: the colour picker opens for these residents.
+    MarkCustom(Vec<Uuid>),
+    /// Mark ▸ Clear Mark(s) (Nearby.People.ClearAvatarMarkColor).
+    ClearMarks(Vec<Uuid>),
+    /// Mark ▸ Clear all Marks (Nearby.People.ClearAllAvatarMarkColors).
+    ClearAllMarks,
 }
 
 /// "Add to contact set": one entry per set, then "New contact set…"
@@ -1003,6 +1013,8 @@ fn avatar_menu_reporting(
             if menu::item_if(ui, p, "map", aurora_i18n::tr!("common-show-on-map-2"), mappable) {
                 act(CtxAction::ShowOnMap(id));
             }
+            // menu_fs_radar.xml's MarkAvatar, before Share
+            crate::ui::avatar_marks::submenu(ui, p, world, &[id]);
             menu::todo(ui, p, "share", aurora_i18n::tr!("common-share"));
             if menu::item(ui, p, "coin-filled", aurora_i18n::tr!("common-pay")) {
                 act(CtxAction::PayResident(id));
