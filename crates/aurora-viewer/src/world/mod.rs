@@ -131,6 +131,10 @@ mod god_mode_tests;
 #[cfg(test)]
 mod group_notice_tests;
 #[cfg(test)]
+mod last_speaker_tests;
+#[cfg(test)]
+mod object_name_tests;
+#[cfg(test)]
 mod toasts_tests;
 
 use crate::agent::AgentState;
@@ -188,6 +192,9 @@ pub struct Region {
     /// post links in chat applies here, so the role editor shows it.
     pub group_chat_post_links: bool,
     pub max_link_children: Option<u32>,
+    /// OpenRegionInfo (Aurora-Sim based grids): the Region / Estate
+    /// window's "Region settings".
+    pub open_settings: Option<aurora_net::open_region::OpenRegionSettings>,
     pub animated_object_max_tris: u32,
 }
 
@@ -314,6 +321,28 @@ pub struct ChatLine {
     pub origin: Origin,
 }
 
+/// The name an object speaks under in the nearby chat. A name of nothing but
+/// spaces is an empty one, and with `mark` (FSMarkObjects) it becomes "(no
+/// name)": a script that clears its name can no longer write a line that
+/// reads like a resident's. process_chat_from_simulator
+/// (indra/newview/llviewermessage.cpp, FIRE-2434).
+pub fn object_speaker_name(name: String, mark: bool) -> String {
+    match name.trim().is_empty() {
+        false => name,
+        true if mark => aurora_i18n::tr!("world-chat-unnamed-object").to_owned(),
+        true => String::new(),
+    }
+}
+
+/// Whether a nearby line makes its speaker the last one heard: a resident
+/// other than us or an object, outside do not disturb (process_chat_from_simulator
+/// calls LLAgent::heardChat for an audible line of anyone not muted, unless
+/// do not disturb is on; heardChat skips our own id). The blocked never get
+/// this far.
+fn heard_from(kind: ChatKind, dnd: bool) -> bool {
+    !dnd && matches!(kind, ChatKind::Local(_) | ChatKind::Object(_))
+}
+
 /// Drawn speed (m/s) under which our walk stops after a release, with
 /// Aurora's movement (`World::update_own_locomotion`).
 const GLIDE_WALKING: f32 = 0.5;
@@ -399,6 +428,10 @@ pub struct World {
     /// A resident said something in nearby chat since the app last looked:
     /// it may flash the Conversations button (FSNotifyNearbyChatFlash).
     pub nearby_news: bool,
+    /// The last resident or object heard in nearby chat, ourselves and the
+    /// blocked left out, nothing recorded in do not disturb (LLAgent::heardChat
+    /// from process_chat_from_simulator): what Look at Last Chatter frames.
+    pub last_speaker: Option<Uuid>,
     /// What the nearby chat's entry counts as unread: `chat_unread`, or only
     /// the people's lines while `quiet_automated_chat` is on.
     pub chat_badge: usize,
@@ -744,6 +777,16 @@ pub struct World {
     /// "Teleport completed from <SLURL>" in nearby chat after a teleport to
     /// another region (FSShowBackSLURL, from the settings).
     pub show_back_slurl: bool,
+    /// An object with an empty name speaks as "(no name)" (FSMarkObjects,
+    /// from the settings; `object_speaker_name`).
+    pub mark_unnamed_objects: bool,
+    /// Objects' "returned to your inventory" messages dropped
+    /// (FSDisableReturnObjectNotification, from the settings).
+    pub hide_object_returns: bool,
+    /// The residents drawn otherwise than by the complexity rules: 1 never
+    /// fully, 2 always fully (Settings::render_exceptions), copied from the
+    /// settings each frame for the menus of the people lists.
+    pub render_exceptions: std::collections::HashMap<Uuid, u8>,
     /// The SLURL of the place a teleport leaves, taken at its TeleportFinish
     /// (LLAgent::setTeleportState(TELEPORT_MOVING) saves the "back" SLURL
     /// there) and said on its arrival.
@@ -876,6 +919,7 @@ impl World {
             chat_clock: Default::default(),
             chat_unread: 0,
             nearby_news: false,
+            last_speaker: None,
             chat_badge: 0,
             quiet_automated_chat: false,
             announce_incoming_im: false,
@@ -1036,6 +1080,9 @@ impl World {
             collisions: Default::default(),
             fly_after_teleport: false,
             show_back_slurl: true,
+            mark_unnamed_objects: false,
+            hide_object_returns: false,
+            render_exceptions: Default::default(),
             tp_back_slurl: None,
             open_ims_path: None,
             reopen_ims: Vec::new(),
@@ -2288,6 +2335,7 @@ impl World {
             grid_status: Default::default(),
             currency_base_uri: String::new(),
             max_link_children: None,
+            open_settings: None,
             animated_object_max_tris: 0,
             opensim: Default::default(),
             currency_symbol: String::new(),
@@ -2839,6 +2887,10 @@ impl World {
             }
             NetEvent::RegionLinkLimit { handle, max_children } => {
                 self.ensure_region(handle, (256, 256)).max_link_children = max_children;
+                None
+            }
+            NetEvent::OpenRegionSettings { handle, settings } => {
+                self.ensure_region(handle, (256, 256)).open_settings = Some(*settings);
                 None
             }
             NetEvent::SimulatorFeatures {
@@ -4622,6 +4674,7 @@ impl World {
         // IDEVO: avatars by their complete name ("Jane Doe (janedoe)")
         let from = match c.source_type {
             ChatSourceType::Agent => self.social.avatar_names.complete(&c.source_id).unwrap_or(c.from_name),
+            ChatSourceType::Object => object_speaker_name(c.from_name, self.mark_unnamed_objects),
             _ => c.from_name,
         };
         // a resident's line that mentions the agent
@@ -4643,6 +4696,9 @@ impl World {
         // a resident's line, not ours nor an object's: the Conversations
         // button may flash (the blocked never got this far)
         self.nearby_news |= matches!(kind, ChatKind::Local(_));
+        if heard_from(kind, self.status.dnd) {
+            self.last_speaker = Some(c.source_id);
+        }
         // the bubble above the speaker's head: residents only, ourselves
         // included, never while we are in do not disturb
         // (process_chat_from_simulator, LLVOAvatar::addChat)
@@ -4803,6 +4859,10 @@ impl World {
             return;
         }
         // dialog 19 = MessageFromObject
+        if self.hide_object_returns && object_im_filter::is_return_notice(&im) {
+            log::info!("object return message hidden: {}", im.from_name);
+            return;
+        }
         if self.object_im_filtered(&im) {
             return;
         }
