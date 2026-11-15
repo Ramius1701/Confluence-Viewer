@@ -482,3 +482,16 @@ fn check_loopback_channel(channel: ChannelKind) {
         let _ = server_rt.block_on(pc.close());
     }
 }
+
+/// The playout tops up a sink left on about one packet, and leaves alone a
+/// sink at its margin (60 ms queued, the start, or 40 ms between packets).
+#[test]
+fn top_up_only_when_the_margin_is_gone() {
+    // 20 ms queued (a packet just pushed into an empty sink): top up
+    assert!(needs_top_up(PLC_FRAME));
+    assert!(needs_top_up(0));
+    // 30 ms and more: the margin holds
+    assert!(!needs_top_up(PLC_FRAME * 3 / 2));
+    assert!(!needs_top_up(PLC_FRAME * 2));
+    assert!(!needs_top_up(PLC_FRAME * 3));
+}

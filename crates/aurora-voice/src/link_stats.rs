@@ -34,6 +34,7 @@ const OPUS_CLOCK: i64 = 48_000;
 pub(crate) struct LinkStats {
     rx_packets: AtomicU32,
     rx_missing: AtomicU32,
+    rx_topped_up: AtomicU32,
     rx_queue_max: AtomicU32,
     rx_lag_max_us: AtomicU32,
     rx_lag_last_us: AtomicU32,
@@ -65,6 +66,12 @@ impl LinkStats {
         self.rx_missing.fetch_add(packets, Ordering::Relaxed);
     }
 
+    /// One concealed frame added to rebuild the voice sink's margin
+    /// (`session::TOP_UP_BELOW`): each is 20 ms the stream fell behind.
+    pub(crate) fn rx_topped_up(&self) {
+        self.rx_topped_up.fetch_add(1, Ordering::Relaxed);
+    }
+
     /// Track events taken at one wake of the receive task (the webrtc
     /// queue's depth at that moment), and the voice sink's fill after them.
     pub(crate) fn rx_wake(&self, queued: u32, sink_frames: usize) {
@@ -94,6 +101,7 @@ impl LinkStats {
         Window {
             rx_packets: take(&self.rx_packets),
             rx_missing: take(&self.rx_missing),
+            rx_topped_up: take(&self.rx_topped_up),
             rx_queue_max: take(&self.rx_queue_max),
             rx_lag_max_us: take(&self.rx_lag_max_us),
             rx_lag_last_us: self.rx_lag_last_us.load(Ordering::Relaxed),
@@ -112,6 +120,7 @@ impl LinkStats {
 pub(crate) struct Window {
     pub rx_packets: u32,
     pub rx_missing: u32,
+    pub rx_topped_up: u32,
     pub rx_queue_max: u32,
     pub rx_lag_max_us: u32,
     pub rx_lag_last_us: u32,
@@ -214,11 +223,12 @@ fn opt_ms(v: Option<f64>) -> String {
 pub(crate) fn line(w: &Window, r: &RtcpView) -> String {
     let frames_ms = |f: u32| f64::from(f) / 48.0;
     format!(
-        "voice stats: rx {} packets, {} missing, queue max {}, lag over best {:.0} ms (max {:.0}), sink {:.0} ms (max {:.0}) | \
+        "voice stats: rx {} packets, {} missing, {} topped up, queue max {}, lag over best {:.0} ms (max {:.0}), sink {:.0} ms (max {:.0}) | \
          tx {} packets, write wait max {:.1} ms (total {:.1}), mic backlog max {:.0} ms | \
          server sees our jitter {}, loss {:.1}% ({} reports); we see its jitter {}, lost {}; ICE rtt {}",
         w.rx_packets,
         w.rx_missing,
+        w.rx_topped_up,
         w.rx_queue_max,
         ms(u64::from(w.rx_lag_last_us)),
         ms(u64::from(w.rx_lag_max_us)),
@@ -247,6 +257,7 @@ mod tests {
         s.rx_packet(Duration::from_millis(3));
         s.rx_packet(Duration::from_millis(1));
         s.rx_missing(2);
+        s.rx_topped_up();
         s.rx_wake(1, 2_880);
         s.rx_wake(4, 960);
         s.tx_packet(Duration::from_micros(10));
@@ -258,6 +269,7 @@ mod tests {
             Window {
                 rx_packets: 2,
                 rx_missing: 2,
+                rx_topped_up: 1,
                 rx_queue_max: 4,
                 rx_lag_max_us: 3_000,
                 rx_lag_last_us: 1_000,
@@ -303,6 +315,7 @@ mod tests {
         let w = Window {
             rx_packets: 250,
             rx_missing: 1,
+            rx_topped_up: 0,
             rx_queue_max: 2,
             rx_lag_max_us: 40_000,
             rx_lag_last_us: 12_000,
@@ -323,7 +336,7 @@ mod tests {
         };
         assert_eq!(
             line(&w, &r),
-            "voice stats: rx 250 packets, 1 missing, queue max 2, lag over best 12 ms (max 40), sink 60 ms (max 90) | \
+            "voice stats: rx 250 packets, 1 missing, 0 topped up, queue max 2, lag over best 12 ms (max 40), sink 60 ms (max 90) | \
              tx 250 packets, write wait max 0.3 ms (total 2.0), mic backlog max 20 ms | \
              server sees our jitter 3.0 ms, loss 0.0% (5 reports); we see its jitter -, lost 0; ICE rtt 34.0 ms"
         );

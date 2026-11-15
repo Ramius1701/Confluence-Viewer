@@ -411,6 +411,23 @@ fn status_for_provision_error(e: &PostError) -> VoiceStatus {
 const MAX_OPUS_FRAME: usize = 5760;
 /// Samples per channel concealed for one lost packet (the server sends 20 ms).
 const PLC_FRAME: usize = 960;
+/// Below this many frames queued in the voice sink right after a packet, the
+/// playout adds one concealed frame (Opus packet loss concealment) to rebuild
+/// its margin: 30 ms, less than two packets. The sink starts playing with
+/// 60 ms queued and only refills to that after running dry, so a hold-up of
+/// the stream shorter than the margin left it playing on about one packet
+/// for minutes, where any later hiccup of 20 ms is a gap. Measured on an
+/// OpenSim grid: delays of 45 to 160 ms with no packet lost, then minutes at
+/// 20 ms queued. libwebrtc's NetEq, which the Legacy Viewer plays voice
+/// through, stretches the audio with concealment the same way to keep its
+/// target delay.
+const TOP_UP_BELOW: usize = PLC_FRAME * 3 / 2;
+
+/// Whether the voice sink, `queued` frames deep just after a packet, should
+/// get one concealed frame to rebuild its margin ([`TOP_UP_BELOW`]).
+fn needs_top_up(queued: usize) -> bool {
+    queued < TOP_UP_BELOW
+}
 
 /// Polls `fut` once without waiting: `Some` when it is ready now.
 fn ready_now<F: std::future::Future>(fut: F) -> Option<F::Output> {
@@ -457,7 +474,16 @@ impl Playout {
         }
         match self.decoder.decode(&packet.payload, MAX_OPUS_FRAME, &mut self.pcm) {
             Ok(n) => {
-                sink.lock().push(&self.pcm[..(n * 2).min(self.pcm.len())], 2);
+                let mut sink = sink.lock();
+                sink.push(&self.pcm[..(n * 2).min(self.pcm.len())], 2);
+                // a null sink (no output device) is always empty: no margin to keep
+                if sink.is_connected()
+                    && needs_top_up(sink.queued_frames())
+                    && let Ok(n) = self.decoder.decode(&[], PLC_FRAME, &mut self.pcm)
+                {
+                    sink.push(&self.pcm[..(n * 2).min(self.pcm.len())], 2);
+                    stats.rx_topped_up();
+                }
             }
             Err(e) => log::debug!("voice: undecodable Opus packet: {e:?}"),
         }
