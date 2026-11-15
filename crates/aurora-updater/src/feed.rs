@@ -12,8 +12,7 @@ pub const RELEASES: &str = "https://api.github.com/repos/Ramius1701/Confluence-V
 pub const RELEASE_PAGE: &str = "https://github.com/Ramius1701/Confluence-Viewer/releases";
 const DOWNLOADS: &str = "https://github.com/Ramius1701/Confluence-Viewer/releases/download";
 /// Start of the release archives' names and of the folder inside the Windows
-/// zip: `Confluence-Viewer-<tag>-windows-x64.zip`. Releases also carry an
-/// `Aurora-Viewer-…` copy for installs of 0.9.8 (`install::LEGACY_EXE`).
+/// zip: `Confluence-Viewer-<tag>-windows-x64.zip`.
 pub(crate) const PACKAGE: &str = "Confluence-Viewer";
 pub const POLICY: &str = "aurora-update-policy.json";
 pub const MAX_ARCHIVE: u64 = 2 * 1024 * 1024 * 1024;

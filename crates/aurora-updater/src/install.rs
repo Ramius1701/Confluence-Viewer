@@ -13,10 +13,10 @@ use std::{
 /// The viewer's executable in a Confluence Viewer package.
 pub(crate) const EXE: &str = "confluence-viewer.exe";
 /// Aurora Viewer's name for it. Installs of Confluence 0.9.8 have the viewer
-/// under this name, and their updater only installs a package that has it:
-/// the release's bridge zip carries the viewer under this name, and the
-/// regular package carries a small launcher under it (`confluence-launcher`)
-/// so that shortcuts and pinned icons made before the rename keep working.
+/// under this name (they update by hand: their updater only looks for
+/// Aurora's archive name). The package carries a small launcher under it
+/// (`confluence-launcher`) so that shortcuts and pinned icons made before
+/// the rename keep working.
 /// Either one may be the running viewer while an install moves to the new
 /// name, so both are accepted wherever the running executable is checked.
 pub(crate) const LEGACY_EXE: &str = "aurora-viewer.exe";
