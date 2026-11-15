@@ -215,3 +215,17 @@ users download and run:
   `install.rs` kept both sides (our exe names, upstream's drive-root check). "Aurora Weather" keeps its name in every
   language: regions set it for all viewers, like "Aurora water" (protected in `rebrand-locales.py`). Exported models
   name Confluence Viewer as their authoring tool.
+- 2026-11-15: the bridge zip is dropped (no one is on 0.9.8); releases carry only the Confluence-Viewer packages.
+
+## Voice buffer top-up for OpenSim (2026-11-15)
+
+On Casperia Prime the network was clean (no loss, under 1 ms jitter), but the voice server stalls for 45-160 ms at
+times. After a stall the playback queue sat at 20 ms for minutes, so every small delay broke up the speech.
+`aurora-voice` now adds one Opus concealment frame when less than 30 ms is queued after a packet (as libwebrtc's NetEq
+stretches its buffer); the voice stats line counts them as "topped up". **Not yet tested on the grid** (needs a second
+person speaking). Possibly worth offering upstream once it is.
+
+Merged 19 more upstream commits up to `47e5ccd5` (Aurora-Sim region settings, mouselook aids, name tag distance...).
+No conflicts; no new Aurora text to rebrand. "Aurora-Sim" (grid software) only appears in code comments, so the rename
+leaves it alone. One GPU test, `water_mesh_depth_clamp_preserves_coverage_and_occlusion_on_gpu`, fails on the RTX 3050
+laptop (driver 621.24, software depth clamp path); the merge touched no water code.
