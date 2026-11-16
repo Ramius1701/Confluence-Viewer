@@ -32,6 +32,19 @@ pub enum FloatingTextBackground {
     All,
 }
 
+/// A blocked resident's nearby chat (FSShowMutedChatHistory, fsfloaternearbychat.cpp):
+/// hidden as in the Legacy Viewer by default; or kept in the nearby chat's
+/// history only, either folded into one "n messages hidden" row that opens
+/// on a click, or greyed, as the Legacy Viewer's option shows them. Never
+/// above the chat bar, in a bubble, a sound, an alert or an unread count.
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub enum BlockedChat {
+    #[default]
+    Hidden,
+    Collapsed,
+    Greyed,
+}
+
 /// How the Conversations window looks (Preferences › Aurora): Aurora's
 /// workspace (the default: a column of conversations, messages grouped by
 /// author with their picture, `ui/chat/aurora.rs`), its compact variant (one
@@ -490,6 +503,28 @@ impl DebugView {
 /// The former look-at range slider's maximum, which meant no limit.
 const FORMER_LOOK_AT_UNLIMITED: f32 = 64.0;
 
+/// The conversation log window's view menu (menu_conversation_log_view.xml).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct ConversationLogView {
+    /// CallLogSortOrder: by date (1, the default) or by name (0).
+    pub by_date: bool,
+    /// SortFriendsFirst (on).
+    pub friends_first: bool,
+    /// ShowBlockedConvHistory (off).
+    pub show_blocked: bool,
+}
+
+impl Default for ConversationLogView {
+    fn default() -> Self {
+        ConversationLogView {
+            by_date: true,
+            friends_first: true,
+            show_blocked: false,
+        }
+    }
+}
+
 /// The draw distance's range (m): the Legacy Viewer's Graphics slider
 /// (RenderFarClip, panel_preferences_graphics1.xml, 32 to 1024). A region
 /// sends what it allows of it (OpenSim's MaxDrawDistance, 512 by default).
@@ -859,6 +894,8 @@ pub struct Settings {
     pub show_appearance: bool,
     /// Crop outfit gallery previews to fill their frames (off: fit the whole image).
     pub appearance_fill_previews: bool,
+    /// The order of the Favorite Wearables list (FSWearableFavoritesSortOrder).
+    pub wearable_favorites_sort: crate::world::wearable_favorites::SortOrder,
     /// The Appearance tab shown at exit (gallery, outfit list, worn), shown
     /// again at the next start, as the Legacy Viewer's `LastAppearanceTab`.
     pub appearance_tab: u8,
@@ -927,6 +964,9 @@ pub struct Settings {
     /// With it, the system lines of the conversations (calls, automatic
     /// replies) too (off, the human's choice of 2026-10-24).
     pub compact_im_system_lines: bool,
+    /// What the nearby chat shows of a blocked resident's lines
+    /// (FSShowMutedChatHistory, off: hidden; Preferences › Chat).
+    pub blocked_chat: BlockedChat,
     /// An object with an empty name speaks in the nearby chat as "(no
     /// name)", so that its line cannot pass for a resident's (FSMarkObjects,
     /// off; Preferences > Chat).
@@ -1120,6 +1160,13 @@ pub struct Settings {
     pub log_im: bool,
     /// Write the nearby chat too (Firestorm LogNearbyChat, off).
     pub log_nearby: bool,
+    /// Keep the conversation log: who we had an instant message, group chat
+    /// or conference with, and when (the Legacy Viewer's
+    /// KeepConversationLogTranscripts > 0, on). Independent of `log_im`
+    /// here; see `ui/conversation_log.rs`.
+    pub log_conversations: bool,
+    /// The conversation log window's order and filters.
+    pub conversation_log: ConversationLogView,
     /// Reopen the private conversations of the last session at login (the
     /// Legacy Viewer's FSRestoreOpenIMs, off).
     pub reopen_ims: bool,
@@ -1392,6 +1439,10 @@ pub struct Settings {
     /// The GIF button of the Conversations field and its picker
     /// (Preferences › Chat; `gif_search.rs`).
     pub gifs: crate::gif_search::Settings,
+    /// The Legacy Viewer's conversation options of Preferences › Chat: tab
+    /// order and names, moderators, "(You)", brackets, history fade, opening
+    /// on offline messages (`ui/chat/conversation_options.rs`).
+    pub conversation_options: crate::ui::chat::conversation_options::Settings,
     /// The notification center's style (Preferences › Aurora).
     pub notifications_style: NotificationsStyle,
     /// The world map's layout (`ui/worldmap/overlay.rs` or the side panel).
@@ -2323,6 +2374,7 @@ impl Default for Settings {
             show_inventory: false,
             show_appearance: false,
             appearance_fill_previews: false,
+            wearable_favorites_sort: Default::default(),
             appearance_tab: 0,
             show_ao: false,
             ao: Default::default(),
@@ -2356,6 +2408,7 @@ impl Default for Settings {
             script_errors_channel: 1,
             compact_automated_chat: false,
             compact_im_system_lines: false,
+            blocked_chat: BlockedChat::Hidden,
             mark_unnamed_objects: false,
             chat_keep_focus: true,
             chat_gesture_autocomplete: true,
@@ -2419,6 +2472,8 @@ impl Default for Settings {
             toast_gap: TOAST_GAP,
             log_im: true,
             log_nearby: false,
+            log_conversations: true,
+            conversation_log: Default::default(),
             reopen_ims: false,
             log_show_history: true,
             log_dated_names: false,
@@ -2518,6 +2573,7 @@ impl Default for Settings {
             chat_column_collapsed: false,
             link_previews: Default::default(),
             gifs: Default::default(),
+            conversation_options: Default::default(),
             notifications_style: NotificationsStyle::Aurora,
             world_map_style: WorldMapStyle::Aurora,
             photo_window: PhotoWindowStyle::Aurora,
@@ -3487,6 +3543,7 @@ impl Settings {
             *opacity = if opacity.is_finite() { opacity.clamp(0.0, 1.0) } else { default };
         }
         self.im_toast_seconds = self.im_toast_seconds.clamp(3.0, 60.0);
+        self.conversation_options.sanitize();
         self.tip_toast_seconds = if self.tip_toast_seconds.is_finite() {
             self.tip_toast_seconds.clamp(1.0, 30.0)
         } else {
