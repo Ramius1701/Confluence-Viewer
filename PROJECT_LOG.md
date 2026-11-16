@@ -229,3 +229,15 @@ Merged 19 more upstream commits up to `47e5ccd5` (Aurora-Sim region settings, mo
 No conflicts; no new Aurora text to rebrand. "Aurora-Sim" (grid software) only appears in code comments, so the rename
 leaves it alone. One GPU test, `water_mesh_depth_clamp_preserves_coverage_and_occlusion_on_gpu`, fails on the RTX 3050
 laptop (driver 621.24, software depth clamp path); the merge touched no water code.
+
+## Releases v0.9.10-beta.20261116.1 and v0.9.10 (2026-11-16)
+
+- Merged 31 upstream commits (the Director: a camera track and video recorder; films go to `Videos/Confluence Viewer`
+  as `Confluence_<time>`), then tagged `v0.9.10-beta.20261116.1`: a pre-release, offered only to the Beta channel. It
+  is the first release with a macOS build since the Mac packaging fix.
+- Merged 20 more (Aurora's stable v0.9.10 is at `1c9c39c2`; our merge goes up to `59264a8e`) and tagged `v0.9.10`.
+- First upstream PR from the fork: Aurora-Viewer/Aurora-Viewer#3859. The portable water depth clamp re-projected the
+  interpolated world position, which an AMD Vulkan driver puts centimetres off near the camera, so
+  `water_mesh_depth_clamp_preserves_coverage_and_occlusion_on_gpu` fails on this PC (wgpu tests use the AMD integrated
+  GPU, the viewer the RTX 3050). The fix reads the fragment's own 1/w. Until it is merged upstream, that one test fails
+  here; everything else passes.
