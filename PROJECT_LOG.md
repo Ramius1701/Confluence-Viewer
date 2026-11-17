@@ -288,3 +288,14 @@ plan above is superseded; it stays on file.
 - HANDOFFS.md was lost and rebuilt by the OpenSim session. Its "Region ↔ viewer" interface now describes the Aurora
   fork, acknowledges OpenSim's Aurora Weather sky-mark row, and notes a gap: the viewer ignores the region's
   `stun-servers` and asks `stun1/2.<grid>.secondlife.io`, which do not exist off Second Life.
+
+## Voice STUN servers and bug reports (2026-11-17)
+
+- Voice off Second Life now uses the region's SimulatorFeatures `stun-servers` (as the Legacy Viewer does since
+  FIRE-36421) instead of Linden's `stun*.agni.secondlife.io`. On Casperia that is `stun.l.google.com:19302` and
+  `stun.cloudflare.com:3478` (live `OpenSim.ini` `StunServers`). Tested on the grid 2026-11-17: voice connects and
+  sends; receiving from a remote user not yet tested. The voice log names the STUN servers used.
+- Bug reports: Issues were off on the fork, so the browser path landed nowhere; turned on 2026-11-17. Direct sending
+  and crash reports used Aurora's GitHub App (installed on Aurora's repo only); its client id is blanked, so the
+  viewer says direct sending is not set up. **To do (owner):** register a Confluence GitHub App (Device Flow on,
+  Issues read/write, installed on the fork) and put its Client ID in `bug_report/github.rs` and `crash/github.rs`.
