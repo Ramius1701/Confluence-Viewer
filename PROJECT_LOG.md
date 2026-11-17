@@ -241,3 +241,50 @@ laptop (driver 621.24, software depth clamp path); the merge touched no water co
   `water_mesh_depth_clamp_preserves_coverage_and_occlusion_on_gpu` fails on this PC (wgpu tests use the AMD integrated
   GPU, the viewer the RTX 3050). The fix reads the fragment's own 1/w. Until it is merged upstream, that one test fails
   here; everything else passes.
+
+## Forked: Confluence-Viewer is a fork of Aurora (2026-11-08)
+
+The owner decided to fork Aurora. `github.com/Ramius1701/Confluence-Viewer` is a GitHub fork of Aurora-Viewer, cloned
+into this folder (`origin` = the fork, `upstream` = Aurora-Viewer), `main` at `29dd6a4c` (2026-11-08). The Firestorm
+plan above is superseded; it stays on file.
+
+- **Rules from Aurora's TRADEMARKS.md and GPLv3:** a modified version needs its own name and icon (no Aurora name or
+  wolf logo as its brand), keeps Aurora's copyright and licence notices including the About window, and says it was
+  modified and when. Calling it "based on Aurora Viewer" is fine.
+- **Keep it a thin fork.** Upstream lands dozens of commits a day, so merging `upstream/main` must stay cheap. Rename
+  only what users see (app name, window title, installer, icons, About window, data folder), and leave the
+  `aurora-*` crate names and internal identifiers alone. Send OpenSim fixes upstream as PRs where they are general.
+- **To do before any build is shared:** the rebrand above; point `aurora-updater` away from Aurora's releases (or
+  disable it), so it can't replace our build with theirs; a Confluence icon (the owner supplies it).
+- **First Confluence change:** read `stun-servers` from SimulatorFeatures (`aurora-voice/src/lib.rs:76`), a good
+  upstream PR too.
+
+## Forked: Confluence-Viewer is a fork of Aurora (2026-11-08)
+
+The owner decided to fork Aurora. `github.com/Ramius1701/Confluence-Viewer` is a GitHub fork of Aurora-Viewer, cloned
+into this folder (`origin` = the fork, `upstream` = Aurora-Viewer), `main` at `29dd6a4c` (2026-11-08). The Firestorm
+plan above is superseded; it stays on file.
+
+- **Rules from Aurora's TRADEMARKS.md and GPLv3:** a modified version needs its own name and icon (no Aurora name or
+  wolf logo as its brand), keeps Aurora's copyright and licence notices including the About window, and says it was
+  modified and when. Calling it "based on Aurora Viewer" is fine.
+- **Keep it a thin fork.** Upstream lands dozens of commits a day, so merging `upstream/main` must stay cheap. Rename
+  only what users see (app name, window title, installer, icons, About window, data folder), and leave the
+  `aurora-*` crate names and internal identifiers alone. Send OpenSim fixes upstream as PRs where they are general.
+- **To do before any build is shared:** the rebrand above; point `aurora-updater` away from Aurora's releases (or
+  disable it), so it can't replace our build with theirs; a Confluence icon (the owner supplies it).
+- **First Confluence change:** read `stun-servers` from SimulatorFeatures (`aurora-voice/src/lib.rs:76`), a good
+  upstream PR too.
+
+## Merge up to Aurora 4bcf916f (2026-11-17)
+
+- Merged 96 upstream commits (Aurora's v0.9.11 betas). Conflicts in the updater: Aurora's update now replaces only the
+  package's own entries and keeps the user's files, and its install check asks for the viewer under the package name
+  (`confluence-viewer.exe` here). So an install of 0.9.8 (viewer still named `aurora-viewer.exe`) no longer updates
+  in place; v0.9.9 and later do (their packages carry `aurora-install.json`). The launcher under Aurora's old name is
+  updated with the package (new test `the_launcher_under_aurora_name_is_updated_with_the_viewer`). 360° photos name
+  Confluence Viewer as their software.
+- PR #3859 rebased onto Aurora's main (TASKS.md conflict only), check.ps1 green, force-pushed; no review yet.
+- HANDOFFS.md was lost and rebuilt by the OpenSim session. Its "Region ↔ viewer" interface now describes the Aurora
+  fork, acknowledges OpenSim's Aurora Weather sky-mark row, and notes a gap: the viewer ignores the region's
+  `stun-servers` and asks `stun1/2.<grid>.secondlife.io`, which do not exist off Second Life.
