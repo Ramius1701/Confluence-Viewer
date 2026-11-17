@@ -15,7 +15,7 @@ pub const ISSUES: &str = "https://github.com/Ramius1701/Confluence-Viewer/issues
 pub const VERIFY: &str = "https://github.com/login/device";
 const TOKEN: &str = "https://github.com/login/oauth/access_token";
 // Public identifier of the project's GitHub App (Device Flow enabled).
-const CLIENT_ID: &str = "Iv23liT7PLWClMLztI1W";
+const CLIENT_ID: &str = "";
 const SERVICE: &str = "Confluence Viewer GitHub";
 const ACCOUNT: &str = "crash-reports";
 /// The credential store's entry of the authorization (service, account),
@@ -233,6 +233,13 @@ impl Session {
             return;
         }
         self.failure = None;
+        // Confluence Viewer: no GitHub App of its own yet (Aurora's only
+        // serves Aurora's repository), so sending in the tester's name stops
+        // here with "not set up"; the browser path still files the report.
+        if CLIENT_ID.is_empty() && !self.demo {
+            self.failure = Some(Failure::Configuration);
+            return;
+        }
         let (tx, rx) = crossbeam_channel::bounded(2);
         let (cancel_tx, cancel_rx) = crossbeam_channel::bounded(1);
         self.cancel = Some(cancel_tx);
