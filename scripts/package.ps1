@@ -9,9 +9,6 @@
     ./scripts/package.ps1 -Exe target/release/aurora-viewer.exe -Out Confluence-Viewer -Launcher target/release/confluence-launcher.exe
 .EXAMPLE
     ./scripts/package.ps1 -Exe target/release/aurora-viewer -Out Confluence-Viewer-v0.8.0-linux-x64
-.EXAMPLE
-    # the bridge for installs of 0.9.8: the viewer under Aurora's name, no launcher
-    ./scripts/package.ps1 -Exe target/release/aurora-viewer.exe -Out Aurora-Viewer-v0.9.9-windows-x64 -ExeName aurora-viewer.exe
 #>
 param(
     [Parameter(Mandatory)][string]$Exe,
