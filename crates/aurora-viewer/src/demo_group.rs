@@ -162,6 +162,7 @@ pub fn simulator_features() -> Option<NetEvent> {
         handle: super::HANDLE,
         animated_object_max_tris: 0,
         voice_server_type: String::new(),
+        stun_servers: String::new(),
         avatar_hover_height: false,
         materials_rate: None,
         materials_max: None,

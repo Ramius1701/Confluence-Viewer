@@ -238,6 +238,7 @@ async fn new_peer_connection(params: &VoiceConnectParams, handler: Arc<Handler>)
         Some(list) => list.clone(),
         None => protocol::stun_servers_for_grid(&params.grid),
     };
+    log::info!("voice: STUN servers {urls:?}");
     let ice_servers = if urls.is_empty() {
         vec![]
     } else {

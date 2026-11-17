@@ -63,6 +63,26 @@ pub fn is_webrtc_voice_server(voice_server_type: &str) -> bool {
     voice_server_type.trim().eq_ignore_ascii_case(WEBRTC_VOICE_SERVER_TYPE)
 }
 
+/// The STUN servers of an OpenSim region: its SimulatorFeatures
+/// "stun-servers", a comma-separated list (LLViewerRegion::setSimulatorFeatures
+/// splits it on "," and getConnectionOptions hands it to libwebrtc off
+/// Second Life, FIRE-36421). Blank entries are dropped, and an entry without a
+/// scheme takes `stun:` (OpenSim's core writes its StunServers as
+/// `host:port`; libwebrtc and webrtc-rs both need the scheme).
+pub fn parse_stun_servers(value: &str) -> Vec<String> {
+    value
+        .split(',')
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(|s| {
+            let scheme = ["stun:", "stuns:", "turn:", "turns:"]
+                .iter()
+                .any(|p| s.len() >= p.len() && s[..p.len()].eq_ignore_ascii_case(p));
+            if scheme { s.to_string() } else { format!("stun:{s}") }
+        })
+        .collect()
+}
+
 /// STUN servers used by Firestorm (`getConnectionOptions`): two per grid,
 /// three on the main grid ("agni").
 pub fn stun_servers_for_grid(grid: &str) -> Vec<String> {
@@ -651,6 +671,23 @@ o=- 1 2 IN IP4 127.0.0.1
         assert_eq!(parse_data_message("[1,2]"), Err(DataMessageError::NotObject));
         assert!(matches!(parse_data_message("{oops"), Err(DataMessageError::Json(_))));
         assert_eq!(parse_data_message("{}").unwrap(), vec![]);
+    }
+
+    /// An OpenSim region's list: as the voice module sends it (stun: URIs),
+    /// as OpenSim's core sends it (host:port), with blanks; a missing or
+    /// empty value is an empty list (host candidates only, no Linden server).
+    #[test]
+    fn region_stun_servers() {
+        assert_eq!(
+            parse_stun_servers("stun:stun.l.google.com:19302,stun:stun.cloudflare.com:3478"),
+            vec!["stun:stun.l.google.com:19302", "stun:stun.cloudflare.com:3478"]
+        );
+        assert_eq!(
+            parse_stun_servers(" stun.l.google.com:19302 , ,STUN:a.example:3478,turns:t.example:5349"),
+            vec!["stun:stun.l.google.com:19302", "STUN:a.example:3478", "turns:t.example:5349"]
+        );
+        assert!(parse_stun_servers("").is_empty());
+        assert!(parse_stun_servers(" , ").is_empty());
     }
 
     #[test]

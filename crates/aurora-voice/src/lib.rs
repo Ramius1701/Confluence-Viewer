@@ -34,7 +34,7 @@ use glam::{DVec3, Quat};
 use tokio::sync::mpsc;
 use uuid::Uuid;
 
-pub use protocol::{ChannelKind, is_webrtc_voice_server};
+pub use protocol::{ChannelKind, is_webrtc_voice_server, parse_stun_servers};
 pub use state::Participant;
 
 use session::{Cmd, Shared};

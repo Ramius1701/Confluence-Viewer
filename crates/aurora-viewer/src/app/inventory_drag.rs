@@ -1403,6 +1403,7 @@ mod tests {
                 terrain_surface: Default::default(),
                 caps: Arc::new(Default::default()),
                 voice_server: String::new(),
+                stun_servers: Vec::new(),
                 avatar_hover_height: false,
                 lsl_syntax_id: None,
                 lua_scripts: false,

@@ -1058,6 +1058,7 @@ impl Session<'_> {
             match caps::simulator_features(&http, &url, caps::SeedRetry::SIMULATOR_FEATURES).await {
                 Ok(v) => {
                     let voice_server_type = v["VoiceServerType"].to_string_value();
+                    let stun_servers = v["stun-servers"].to_string_value();
                     let rate = &v["RenderMaterialsCapability"];
                     let materials_rate = (!rate.is_undef()).then(|| rate.as_f32());
                     let max = &v["MaxMaterialsPerTransaction"];
@@ -1080,6 +1081,7 @@ impl Session<'_> {
                         handle,
                         animated_object_max_tris: v["AnimatedObjects"]["AnimatedObjectMaxTris"].as_i32().max(0) as u32,
                         voice_server_type,
+                        stun_servers,
                         avatar_hover_height,
                         materials_rate,
                         materials_max,

@@ -679,6 +679,9 @@ pub enum NetEvent {
         /// AnimatedObjects / AnimatedObjectMaxTris (LLViewerObject::getAnimatedObjectMaxTris).
         animated_object_max_tris: u32,
         voice_server_type: String,
+        /// "stun-servers": the region's STUN servers for WebRTC voice, a
+        /// comma-separated list as sent (OpenSim; empty when not given).
+        stun_servers: String,
         avatar_hover_height: bool,
         /// "RenderMaterialsCapability": requests per second.
         materials_rate: Option<f32>,

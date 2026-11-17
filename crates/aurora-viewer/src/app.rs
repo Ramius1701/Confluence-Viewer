@@ -7709,6 +7709,7 @@ impl App {
             region_flags: main.and_then(|r| r.info.as_ref()).map(|i| i.region_flags),
             caps: main.map(|r| &*r.caps),
             voice_server: main.map(|r| r.voice_server.as_str()).unwrap_or(""),
+            stun_servers: (!self.second_life()).then(|| main.map_or(&[][..], |r| r.stun_servers.as_slice())),
             parcel: self.world.parcel.as_deref(),
             input_device: &self.settings.audio.input_device,
             mic_gain: self.settings.audio.mic_gain,

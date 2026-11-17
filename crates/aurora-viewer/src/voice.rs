@@ -37,6 +37,10 @@ pub struct VoiceInputs<'a> {
     pub agent_id: Uuid,
     /// Grid id for the STUN servers ("agni" / "aditi").
     pub grid: &'a str,
+    /// Off Second Life: the region's STUN servers, used instead of the
+    /// grid's (getConnectionOptions, FIRE-36421), even when it names none.
+    /// `None` on Second Life.
+    pub stun_servers: Option<&'a [String]>,
     pub region: Option<u64>,
     /// Current region permissions, unknown until its handshake arrives.
     pub region_flags: Option<u32>,
@@ -241,7 +245,7 @@ impl Voice {
                             voice_server_type: v.voice_server.to_owned(),
                             channel,
                             grid: v.grid.to_owned(),
-                            stun_servers: None,
+                            stun_servers: v.stun_servers.map(<[String]>::to_vec),
                         };
                         let s = VoiceSession::connect(v.http.clone(), params, engine.voice_sink());
                         s.set_mic(self.mic.clone());
@@ -442,6 +446,7 @@ mod tests {
             region_flags: Some(aurora_net::region_flags::ALLOW_VOICE),
             caps: None,
             voice_server: "webrtc",
+            stun_servers: None,
             parcel: None,
             input_device: "",
             mic_gain: 1.0,

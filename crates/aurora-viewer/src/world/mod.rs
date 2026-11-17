@@ -171,6 +171,9 @@ pub struct Region {
     pub caps: Arc<HashMap<String, String>>,
     /// Voice server of the region (SimulatorFeatures): "webrtc", "vivox" or empty.
     pub voice_server: String,
+    /// The region's STUN servers for WebRTC voice (SimulatorFeatures
+    /// "stun-servers", `aurora_voice::parse_stun_servers`); empty when not given.
+    pub stun_servers: Vec<String>,
     pub avatar_hover_height: bool,
     /// SimulatorFeatures' LSLSyntaxId once they came (nil: none named).
     pub lsl_syntax_id: Option<Uuid>,
@@ -2401,6 +2404,7 @@ impl World {
             terrain_surface: Default::default(),
             caps: Arc::new(HashMap::new()),
             voice_server: String::new(),
+            stun_servers: Vec::new(),
             avatar_hover_height: false,
             lsl_syntax_id: None,
             lua_scripts: false,
@@ -3027,6 +3031,7 @@ impl World {
                 handle,
                 animated_object_max_tris,
                 voice_server_type,
+                stun_servers,
                 avatar_hover_height,
                 materials_rate,
                 materials_max,
@@ -3051,6 +3056,7 @@ impl World {
                 r.export_supported = export_supported;
                 r.group_chat_post_links = group_chat_post_links;
                 r.voice_server = voice_server_type;
+                r.stun_servers = aurora_voice::parse_stun_servers(&stun_servers);
                 r.avatar_hover_height = avatar_hover_height;
                 r.materials_limits = crate::scene::legacy_mat::RegionLimits::from_features(materials_rate, materials_max);
                 // the place we arrived at learns its grid
@@ -9514,6 +9520,7 @@ mod motion_tests {
                 handle: here,
                 animated_object_max_tris: 0,
                 voice_server_type: String::new(),
+                stun_servers: String::new(),
                 avatar_hover_height: enabled,
                 materials_rate: None,
                 materials_max: None,
