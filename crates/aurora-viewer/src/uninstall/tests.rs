@@ -93,6 +93,7 @@ fn the_plan_lists_only_what_is_ours_and_each_login_once() {
             Part::Secret(Secret::Password(login(ADITI, "Jane Resident"))),
             Part::Secret(Secret::SecondFactor(login(ADITI, "Jane Resident"))),
             Part::Secret(Secret::CrashReports),
+            Part::Secret(Secret::Proxy),
             Part::BlenderAddon,
         ]
     );
@@ -117,14 +118,9 @@ fn the_store_entries_are_the_ones_the_viewer_writes() {
     assert_eq!(password.0, "Confluence Viewer");
     assert_eq!(mfa.0, "Confluence Viewer MFA");
     assert_eq!(password.1, format!("{AGNI}|jane resident"));
-    assert_eq!(
-        Secret::CacheKey.entry(),
-        ("Confluence Viewer cache", "disk cache key v1".to_owned())
-    );
-    assert_eq!(
-        Secret::CrashReports.entry(),
-        ("Confluence Viewer GitHub", "crash-reports".to_owned())
-    );
+    assert_eq!(Secret::CacheKey.entry(), ("Confluence Viewer cache", "disk cache key v1".to_owned()));
+    assert_eq!(Secret::CrashReports.entry(), ("Confluence Viewer GitHub", "crash-reports".to_owned()));
+    assert_eq!(Secret::Proxy.entry(), ("Confluence Viewer Proxy", "SOCKS5".to_owned()));
 }
 
 #[test]
@@ -156,7 +152,9 @@ fn the_run_removes_every_part_and_reports_absent_and_failed_ones() {
             &Done::Removed,
             &Done::Failed("store locked".into()),
             &Done::Removed,
-            // never saved
+            // never saved: the cache key, the crash reports' and the
+            // proxy's credentials
+            &Done::Absent,
             &Done::Absent,
             &Done::Absent,
             &Done::Removed,
