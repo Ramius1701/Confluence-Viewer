@@ -299,3 +299,15 @@ plan above is superseded; it stays on file.
   and crash reports used Aurora's GitHub App (installed on Aurora's repo only); its client id is blanked, so the
   viewer says direct sending is not set up. **To do (owner):** register a Confluence GitHub App (Device Flow on,
   Issues read/write, installed on the fork) and put its Client ID in `bug_report/github.rs` and `crash/github.rs`.
+
+## Release v0.9.11 (2026-11-18)
+
+- Merged 54 upstream commits up to `52e6d985` (Aurora's stable v0.9.11: a complete Director, gaming mode, volumetric
+  clouds, proxy settings, script sync with outside editors). The voice top-up now runs on Aurora's new playout path
+  (gain ramp). Confluence names for the proxy password's store entry, the script-sync viewer name and the Director's
+  image sequences; the Blender add-on's key folder keeps `Aurora\AuroraViewer` because the add-on reads it there.
+- FFmpeg pack 1 (the Director's encoder) copied unchanged from Aurora's `ffmpeg-1` release to the fork's (checksums
+  verified, source archive included for the GPL), since the viewer downloads packs from the fork's releases. Media
+  plugin packs 1-3 on the fork already match Aurora's. **Each new Aurora pack release (media-plugins-N, ffmpeg-N)
+  must be copied the same way before the merge that starts using it ships.**
+- PR #3859 rebased again (TASKS.md), check.ps1 green, mergeable; still no review.
