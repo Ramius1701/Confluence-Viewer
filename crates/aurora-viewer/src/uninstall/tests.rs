@@ -118,8 +118,14 @@ fn the_store_entries_are_the_ones_the_viewer_writes() {
     assert_eq!(password.0, "Confluence Viewer");
     assert_eq!(mfa.0, "Confluence Viewer MFA");
     assert_eq!(password.1, format!("{AGNI}|jane resident"));
-    assert_eq!(Secret::CacheKey.entry(), ("Confluence Viewer cache", "disk cache key v1".to_owned()));
-    assert_eq!(Secret::CrashReports.entry(), ("Confluence Viewer GitHub", "crash-reports".to_owned()));
+    assert_eq!(
+        Secret::CacheKey.entry(),
+        ("Confluence Viewer cache", "disk cache key v1".to_owned())
+    );
+    assert_eq!(
+        Secret::CrashReports.entry(),
+        ("Confluence Viewer GitHub", "crash-reports".to_owned())
+    );
     assert_eq!(Secret::Proxy.entry(), ("Confluence Viewer Proxy", "SOCKS5".to_owned()));
 }
 
