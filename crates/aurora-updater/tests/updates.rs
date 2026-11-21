@@ -209,7 +209,7 @@ fn tar_gz(members: &[Member]) -> Vec<u8> {
 fn valid_tar_gz() -> Vec<u8> {
     tar_gz(&[
         Member::dir("Confluence-Viewer-v0.3.0-linux-x64/"),
-        Member::file("Confluence-Viewer-v0.3.0-linux-x64confluence-viewer", b"new viewer", 0o755),
+        Member::file("Confluence-Viewer-v0.3.0-linux-x64/confluence-viewer", b"new viewer", 0o755),
         Member::dir("Confluence-Viewer-v0.3.0-linux-x64/assets/"),
         Member::file("Confluence-Viewer-v0.3.0-linux-x64/assets/character/avatar.llm", b"avatar", 0o644),
         Member::file("Confluence-Viewer-v0.3.0-linux-x64/LICENSE", b"license", 0o644),
