@@ -311,3 +311,15 @@ plan above is superseded; it stays on file.
   plugin packs 1-3 on the fork already match Aurora's. **Each new Aurora pack release (media-plugins-N, ffmpeg-N)
   must be copied the same way before the merge that starts using it ships.**
 - PR #3859 rebased again (TASKS.md), check.ps1 green, mergeable; still no review.
+
+## Merge up to Aurora 231c88a3, region weather gone (2026-11-22)
+
+- Merged 136 upstream commits (Aurora's stable v0.9.12 and v0.9.13 betas). **Region weather removed, as in Aurora**
+  (#4280, Second Life's shared-experience policy): the viewer no longer reads OpenSimWeather 0.7.0's sky codes; the
+  owner chose to follow Aurora. Confluence-OpenSim told (HANDOFFS row moved to Done, message sent).
+- Updater: Aurora's in-place Linux updates, with Confluence names (`Confluence-Viewer-<tag>-linux-x64.tar.gz`,
+  `confluence-viewer` executable on Linux). Release workflow: Aurora's optional SignPath signing comes along; it stays
+  off on the fork (needs the `SIGNPATH_SIGN_RELEASES` variable).
+- Twelve new interface languages. `rebrand-locales.py` now takes every catalogue (`locales/*.ftl`): English, French
+  and Japanese phrase by phrase as before; the others follow English key by key, and the four keys that mix a kept
+  feature name with the viewer's name are renamed name by name. Login tagline names OpenSim in all fifteen.
