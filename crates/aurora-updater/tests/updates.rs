@@ -512,7 +512,11 @@ fn a_folder_without_the_viewer_or_an_update_with_foreign_files_is_refused() {
 
 /// The viewer's executable, as this system's package names it.
 fn exe() -> &'static str {
-    if cfg!(windows) { "confluence-viewer.exe" } else { "confluence-viewer" }
+    if cfg!(windows) {
+        "confluence-viewer.exe"
+    } else {
+        "confluence-viewer"
+    }
 }
 
 #[test]

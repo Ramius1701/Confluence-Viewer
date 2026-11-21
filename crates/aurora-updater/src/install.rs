@@ -16,7 +16,11 @@ use std::{
 };
 
 /// The viewer's executable in a Confluence Viewer package.
-pub(crate) const EXE: &str = if cfg!(windows) { "confluence-viewer.exe" } else { "confluence-viewer" };
+pub(crate) const EXE: &str = if cfg!(windows) {
+    "confluence-viewer.exe"
+} else {
+    "confluence-viewer"
+};
 /// Aurora Viewer's name for it. The Windows package carries a small launcher
 /// under it (`confluence-launcher`) so that shortcuts and pinned icons made
 /// before the rename keep working. An install of 0.9.8, with the viewer
