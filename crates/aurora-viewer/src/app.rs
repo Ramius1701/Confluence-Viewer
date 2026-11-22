@@ -712,7 +712,10 @@ pub struct App {
     look_at_privacy: Option<(bool, bool)>,
     /// What the simulator was told of the static eyes animation since the
     /// last arrival (FSStaticEyes).
-    static_eyes: crate::world::lookat::StaticEyes,
+    static_eyes: crate::world::lookat::SimAnimation,
+    /// What the simulator was asked about the Bento idle pose: the same
+    /// rule as the static eyes, asked again after every arrival.
+    bento_idle: crate::world::lookat::SimAnimation,
     /// The world point the cursor was over last frame, and the object it
     /// lies on (the hover pick of the cursor icon), for the look-at.
     look_hover: Option<(Option<usize>, Vec3)>,
@@ -1798,6 +1801,7 @@ impl App {
         let mut media = crate::media::MediaManager::default();
         media.set_pack_dir(plugin_pack.dir());
         let out_device = (!settings.audio.output_device.is_empty()).then(|| settings.audio.output_device.clone());
+        let voice_output = aurora_audio::voice_stream_for(&settings.audio.output_device, &settings.audio.voice_output_device);
         let lib = Arc::new(AvatarLibrary::load());
         // the asset cache store: its key first (the credential store, read
         // here rather than by the first streamer thread), then the folders
@@ -2059,6 +2063,7 @@ impl App {
             cam_key_since: [None; 12],
             look_at_privacy: None,
             static_eyes: Default::default(),
+            bento_idle: Default::default(),
             look_hover: None,
             hover_tips: Default::default(),
             look_at_fades: Default::default(),
@@ -2264,6 +2269,10 @@ impl App {
                 Ok(e) => {
                     let o = e.output_info();
                     log::info!("audio: {} ({} Hz, {} canaux)", o.device_name, o.sample_rate, o.channels);
+                    match voice_output {
+                        aurora_audio::VoiceStream::Same => e.set_voice_output_device(None),
+                        aurora_audio::VoiceStream::Separate(name) => e.set_voice_output_device(Some(name)),
+                    }
                     Some(e)
                 }
                 Err(e) => {
@@ -2490,8 +2499,18 @@ impl App {
             crate::world::rlva::Boundary::Send => {}
             crate::world::rlva::Boundary::Dropped => return,
             crate::world::rlva::Boundary::Refused => {
+                // (what a "restricted" notice stood for: the log names the
+                // command, never its content)
+                log::info!(
+                    "rlva: {} refused at the send boundary (actor {actor})",
+                    crate::world::rlva::command_name(&cmd)
+                );
                 let blocked = aurora_i18n::tr!("rlva-blocked");
-                self.world.system_notice(blocked, crate::world::notice_topics::Topic::Warning);
+                // the watchdog's own commands say nothing to the user, but
+                // whoever waits for their answer still gets it
+                if crate::world::rlva::refusal_shown(actor) {
+                    self.world.system_notice(blocked, crate::world::notice_topics::Topic::Warning);
+                }
                 // answered at once, as the demo answers a change it applies
                 if let Some(reply) = crate::world::rlva::refused_reply(&cmd, blocked) {
                     self.on_app_event(reply);
@@ -3777,6 +3796,7 @@ impl App {
         self.region_restart.put_demo(demo);
         self.move_complete_at = None;
         self.static_eyes.on_arrival();
+        self.bento_idle.on_arrival();
         self.set_mouselook_grab(false);
         self.camera = Camera::default();
     }
@@ -3916,6 +3936,21 @@ impl App {
             }
             if self.outfit_hd_owns(request) {
                 self.outfit_hd_uploaded(result);
+                return;
+            }
+            if self.build.material_uploads.remove(&request) {
+                match result {
+                    Ok(receipt) => {
+                        let id = receipt.item.id;
+                        self.build.status = aurora_i18n::tr!("build-material-saved", name = receipt.item.name.clone());
+                        self.world.inventory.add_items(vec![receipt.item]);
+                        self.inventory_ui.show_original(&self.world.inventory, id);
+                    }
+                    Err(reason) => {
+                        log::warn!("material save failed: {reason:?}");
+                        self.build.status = aurora_i18n::tr!("build-material-save-failed").into();
+                    }
+                }
                 return;
             }
             let material_map = self.imports.uploading_entry(request);
@@ -4635,6 +4670,7 @@ impl App {
                 self.move_complete_at = Some(Instant::now());
                 // the simulator we land in plays none of our animations yet
                 self.static_eyes.on_arrival();
+                self.bento_idle.on_arrival();
                 self.tp_checks = vec![10.0, 3.0];
                 // New region must learn walk/run again (LLAgent::sendWalkRun
                 // after RegionHandshake, llviewermessage.cpp). Without this
@@ -6305,7 +6341,7 @@ impl App {
     /// FSStaticEyes (update_static_eyes in llstartup.cpp, its setting's
     /// listener in llviewercontrol.cpp): the animation that holds the eyes
     /// still is started after every arrival, then started or stopped as the
-    /// setting changes (`StaticEyes`).
+    /// setting changes (`SimAnimation`).
     fn sync_static_eyes(&mut self) {
         if self.move_complete_at.is_none() {
             return;
@@ -6314,6 +6350,16 @@ impl App {
             log::info!("static eyes: {} asked of the simulator", if start { "start" } else { "stop" });
             self.send(NetCommand::AgentAnimation {
                 anim: crate::world::lookat::STATIC_EYES,
+                start,
+            });
+        }
+        // FSPlayDefaultBentoAnimation (LLAgent::setRegion and
+        // stopCurrentAnimations in llagent.cpp, the setting's listener
+        // handlePlayBentoIdleAnimationChanged in llviewercontrol.cpp)
+        if let Some(start) = self.bento_idle.request(self.settings.bento_idle) {
+            log::info!("bento idle pose: {} asked of the simulator", if start { "start" } else { "stop" });
+            self.send(NetCommand::AgentAnimation {
+                anim: reset_skeleton::ANIM_BENTO_IDLE,
                 start,
             });
         }
@@ -7061,6 +7107,16 @@ impl App {
                 && self.applied_audio.is_some()
             {
                 engine.set_output_device((!a.output_device.is_empty()).then(|| a.output_device.clone()));
+            }
+            if self
+                .applied_audio
+                .as_ref()
+                .is_none_or(|p| p.output_device != a.output_device || p.voice_output_device != a.voice_output_device)
+            {
+                match aurora_audio::voice_stream_for(&a.output_device, &a.voice_output_device) {
+                    aurora_audio::VoiceStream::Same => engine.set_voice_output_device(None),
+                    aurora_audio::VoiceStream::Separate(name) => engine.set_voice_output_device(Some(name)),
+                }
             }
             // same order as AUDIO_CHANNELS
             for (i, ch) in aurora_audio::Channel::ALL.iter().enumerate() {
@@ -7816,7 +7872,9 @@ impl App {
                 } else {
                     format!("secondlife:///app/agent/{id}/about {text}")
                 };
-                self.world.system_message(line);
+                // a radar's line (CHAT_TYPE_RADAR), which the chat leaves out
+                // of the system messages' brackets
+                self.world.system_notice(line, crate::world::notice_topics::Topic::Radar);
             }
         }
     }
@@ -8043,9 +8101,13 @@ impl App {
                 let text = self.gfx.as_mut().and_then(|g| g.egui_state.clipboard_text()).unwrap_or_default();
                 self.build.paste_vector(&mut self.world, &self.settings.build, which, &text);
             }
-            Request::CopyKeys => self
-                .egui_ctx
-                .copy_text(self.build.copy_keys(&self.world, &self.settings.build, self.shift)),
+            Request::CopyKeys { feedback, anchor } => {
+                let (keys, count) = self.build.copy_keys_with_count(&self.world, &self.settings.build, self.shift);
+                if count > 0 {
+                    self.egui_ctx.copy_text(keys);
+                    crate::ui::widgets::show_copied(&self.egui_ctx, feedback, anchor, crate::build::ui::copied_keys_label(count));
+                }
+            }
             Request::Script { object, item } => self.open_script(aurora_net::scripts::ScriptTarget { object, item }),
         }
         self.flush_build();
@@ -8053,7 +8115,23 @@ impl App {
 
     /// Send what the build tools queued.
     fn flush_build(&mut self) {
-        for c in std::mem::take(&mut self.build.out) {
+        for mut c in std::mem::take(&mut self.build.out) {
+            // A material saved from the PBR panel: its item's rights narrowed
+            // by the creation defaults for materials (LLFloaterPerms "Materials",
+            // permissions_out.accumulate in can_use_objects_material).
+            if let NetCommand::UploadAsset { request, upload } = &mut c
+                && self.build.material_uploads.contains(request)
+            {
+                let defaults = self.settings.inventory.creation_permissions.materials.permissions();
+                upload.permissions = crate::build::texture_copy::material_save_masks(upload.permissions, defaults);
+                // findUserDefinedCategoryUUIDForType(FT_MATERIAL): the chosen
+                // material upload folder, else Materials
+                upload.folder = crate::imports::Imports::default_folder(
+                    &self.world,
+                    &self.settings.inventory,
+                    aurora_net::inventory::upload::Kind::Material,
+                );
+            }
             if let NetCommand::Build(
                 aurora_net::build::BuildCmd::UpdateTaskInventory { item, .. } | aurora_net::build::BuildCmd::RezScript { item, .. },
             ) = &c
@@ -16380,6 +16458,17 @@ impl App {
                 self.settings.save();
             }
             BarAction::ShowHuds(visible) => self.set_show_huds(visible),
+            BarAction::ToggleAoMini => {
+                // as every toolbar window (LLFloaterReg::toggleInstance): a
+                // minimized one expands; flipping the flag closed it, and it
+                // came back minimized
+                let saved = self.settings.ao.accounts.entry(self.world.agent_id).or_default();
+                ui::widgets::toggle_floater(&self.egui_ctx, ui::ao::mini::WINDOW, &mut saved.mini_open);
+                self.panels.ao_mini = saved.mini_open;
+                if !self.demo {
+                    self.settings.save();
+                }
+            }
             BarAction::ToggleHuds => self.set_show_huds(!self.settings.show_huds),
             BarAction::HudZoom(zoom) => self.world.hud_zoom = zoom.clamp(self.world.hud_zoom_min(), 1.0),
             BarAction::None => {}
@@ -18031,6 +18120,14 @@ impl App {
             self.world
                 .system_message(aurora_i18n::tr!("app-section-settings-reset", section = page.name()));
         }
+        if res.setting_unavailable {
+            self.world.notifications.push(
+                crate::world::notifications::Kind::Info,
+                aurora_i18n::tr!("ui-options-setting-unavailable"),
+                "",
+                crate::world::notifications::Data::None,
+            );
+        }
         if res.open_dev_toolbox {
             self.panels.dev_toolbox = true;
         }
@@ -18811,6 +18908,12 @@ impl App {
                     bottom_top: self.interface.last_room.map_or(screen_rect.bottom() - 56.0, |(_, bottom)| bottom),
                     menu_open: egui::Popup::is_any_open(&ctx),
                 });
+                // what the toolbar buttons of menu commands show, given before
+                // any bar is drawn: the bottom and side bars also show
+                // without the top bar (hidden interface, mouselook chat)
+                self.toolbar_ui.edit_particles = status.edit_particles;
+                self.toolbar_ui.fly_override_active = status.fly_override;
+                self.toolbar_ui.quickjump_active = status.quickjump;
                 if chrome.top {
                     let (bar, audio_action) = ui::bars::top_bars(
                         ui,
@@ -18881,6 +18984,7 @@ impl App {
                     ear: self.settings.audio.voice_ear,
                     noise_suppression: self.settings.audio.voice_noise_suppression,
                     output_device: self.settings.audio.output_device.clone(),
+                    voice_output_device: self.settings.audio.voice_output_device.clone(),
                     input_devices: &self.options_ui.input_devices,
                     output_devices: &self.options_ui.output_devices,
                     devices_listing: self.options_ui.devices_listing,
@@ -19141,8 +19245,9 @@ impl App {
                 }
                 ui::layout::set_window_edges(ui.ctx(), edges);
                 ui::layout::frame(ui.ctx(), &p, self.settings.snap_windows);
+                ui::toolbar::show_command_context(ui.ctx(), &p, bar_layout, toolbar_settings);
                 self.toolbar_ui.show(ui.ctx(), &p, bar_layout, toolbar_settings);
-                if self.toolbar_ui.commit(bar_layout, toolbar_settings) || chat_width_set || toolbar_migrated {
+                if self.toolbar_ui.commit_with_menus(ui.ctx(), bar_layout, toolbar_settings) || chat_width_set || toolbar_migrated {
                     self.settings.save();
                 }
                 // the Favorites button's right click: where the favourites live
@@ -19168,13 +19273,14 @@ impl App {
                 }
                 self.mic_on = mic.on;
                 self.mic_button_held = mic.held;
-                if mic.mode_changed || mic.devices_changed || mic.processing_changed {
+                if mic.mode_changed || mic.devices_changed || mic.voice_output_changed || mic.processing_changed {
                     // the audio engine and the voice follow the settings
                     self.settings.audio.mic_hold = mic.hold;
                     self.settings.audio.voice_ear = mic.ear;
                     self.settings.audio.voice_noise_suppression = mic.noise_suppression;
                     self.settings.audio.input_device = std::mem::take(&mut mic.input_device);
                     self.settings.audio.output_device = std::mem::take(&mut mic.output_device);
+                    self.settings.audio.voice_output_device = std::mem::take(&mut mic.voice_output_device);
                     self.settings.save();
                 }
                 let (open_prefs, list_devices, open_processing) = (mic.open_prefs, mic.list_devices, mic.open_processing);
@@ -23345,7 +23451,9 @@ impl ApplicationHandler for App {
                     crate::ao::demo::seed_swimming_incomplete(&mut self.world.inventory, self.world.agent_id)
                 } else if matches!(mode.as_str(), "empty" | "quick-empty") {
                     uuid::Uuid::nil()
-                } else if mode.starts_with("design-") || matches!(mode.as_str(), "movement" | "movement-rebound" | "swim" | "quick") {
+                } else if mode.starts_with("design-")
+                    || matches!(mode.as_str(), "movement" | "movement-rebound" | "swim" | "quick" | "mini")
+                {
                     crate::ao::demo::seed_movement_design(&mut self.world.inventory, self.world.agent_id)
                 } else {
                     crate::ao::demo::seed(&mut self.world.inventory, self.world.agent_id)
@@ -23355,6 +23463,8 @@ impl ApplicationHandler for App {
                     crate::ao::Account {
                         enabled: mode != "off",
                         selected,
+                        // the Mini AO window, open as after a relog
+                        mini_open: mode == "mini",
                         ..Default::default()
                     },
                 );
@@ -24646,6 +24756,8 @@ impl ApplicationHandler for App {
         #[cfg(windows)]
         crate::slurl_handoff::release();
         self.gfx = None;
+        #[cfg(target_os = "linux")]
+        crate::crash::renderer_dropped();
         // The voice threads end before the process does, the current
         // session's and those of the sessions left moments ago: still
         // running at the exit, an HTTPS logout found the TLS library's

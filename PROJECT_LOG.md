@@ -323,3 +323,12 @@ plan above is superseded; it stays on file.
 - Twelve new interface languages. `rebrand-locales.py` now takes every catalogue (`locales/*.ftl`): English, French
   and Japanese phrase by phrase as before; the others follow English key by key, and the four keys that mix a kept
   feature name with the viewer's name are renamed name by name. Login tagline names OpenSim in all fifteen.
+
+## Merge up to Aurora d10b1f68, repository repair (2026-11-22)
+
+- Merged 29 upstream commits. Only the usual en/fr/ja locale conflicts; no new Aurora name users see in the code.
+  check.ps1: all green but the known AMD water test (Aurora PR #3859, rebased on this main the same day).
+- After the move from S: to G:, one pack of `.git` came out damaged (a blob of Aurora's `captures` branch,
+  `pr-3669/shape-legacy.png`). Repaired by unpacking the pack's good objects, restoring that blob from GitHub
+  (hash checked) and repacking; `git fsck` clean. The damaged pack is kept in `G:\Confluence-Viewer-badpack` until the
+  owner deletes it.
