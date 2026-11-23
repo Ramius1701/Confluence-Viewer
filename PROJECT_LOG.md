@@ -349,3 +349,8 @@ plan above is superseded; it stays on file.
   now publish only when an admin starts them (`.github/actions/release-admin`): the owner is the fork's admin, so our
   releases are not affected. check.ps1 green but the known AMD water test (Aurora PR #3859).
 - The avatar spin fix went to Aurora as PR #4635 (branch `fix/other-avatar-spin`).
+
+## Release v0.9.13-beta.20261123.1 (2026-11-23)
+
+- Tagged on main `94e14a76c` (Aurora up to e6978dcf, with the avatar spin fix): a pre-release for the Beta channel.
+  The Release workflow built and published Windows, Linux and macOS.
