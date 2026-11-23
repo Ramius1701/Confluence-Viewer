@@ -332,3 +332,13 @@ plan above is superseded; it stays on file.
   `pr-3669/shape-legacy.png`). Repaired by unpacking the pack's good objects, restoring that blob from GitHub
   (hash checked) and repacking; `git fsck` clean. The damaged pack is kept in `G:\Confluence-Viewer-badpack` until the
   owner deletes it.
+
+## Other avatars no longer spin (2026-11-23)
+
+- An Aurora user saw a Legacy Viewer user's avatar keep turning. Aurora extrapolated an avatar's reported angular
+  velocity; the Legacy Viewer puts back another avatar's rotation after its motion step (LLVOAvatar::idleUpdate). OpenSim
+  can leave its flying-roll yaw rate in an avatar's updates after landing. Fix: avatars ignore it (`Object::spin`,
+  world/objects.rs), branch `fix/other-avatar-spin` from Aurora's main, cherry-picked here. Validated by the owner on
+  the grid on 2026-11-23 (other avatars look normal); the spin itself did not reproduce again.
+- The doubled outfits of the same evening came from Confluence-OpenSim's default-appearance fallback overwriting fresh
+  bakes; OpenSim is fixing it.
