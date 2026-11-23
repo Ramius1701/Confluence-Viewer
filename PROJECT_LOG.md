@@ -354,3 +354,18 @@ plan above is superseded; it stays on file.
 
 - Tagged on main `94e14a76c` (Aurora up to e6978dcf, with the avatar spin fix): a pre-release for the Beta channel.
   The Release workflow built and published Windows, Linux and macOS.
+
+## Merge up to Aurora 8e7cc561, signed updates arrive (2026-11-23)
+
+- Merged 37 upstream commits. Our two Aurora PRs are merged there: #3859 (AMD water depth; the known AMD water test now
+  passes, check.ps1 fully green) and #4635 (avatar spin). Their worktrees and branches are removed.
+- **Signed updates (#4632):** the viewer installs only a release whose `.sha256` carries an Ed25519 signature by a key
+  in `RELEASE_KEYS` (crates/aurora-updater/src/signature.rs); the publish jobs sign in the `release` environment
+  (secret `UPDATE_SIGNING_KEY`), which allows main and stable tags only, so a beta is made from the Nightly workflow
+  (Actions tab, on main), not by pushing a beta tag. Conflicts in release.yml and the updater tests resolved with
+  Confluence package names; the Mac `.dmg` name in feed.rs rebranded; the fork-only launcher test restored.
+- **Not set up yet:** `RELEASE_KEYS` still holds Aurora's key and the fork has no `release` environment, so the next
+  release's publish jobs stop until the owner runs `scripts/setup-release-signing.ps1 -Repo Ramius1701/Confluence-Viewer`
+  (it makes the key on the PC, stores it in the secret, never prints it, and adds the public half to RELEASE_KEYS);
+  then Aurora's key line is removed and the change committed. Viewers already installed (0.9.13 beta and older) still
+  trust the plain `.sha256` until their first update.
