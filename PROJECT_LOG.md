@@ -342,3 +342,10 @@ plan above is superseded; it stays on file.
   the grid on 2026-11-23 (other avatars look normal); the spin itself did not reproduce again.
 - The doubled outfits of the same evening came from Confluence-OpenSim's default-appearance fallback overwriting fresh
   bakes; OpenSim is fixing it.
+
+## Merge up to Aurora e6978dcf (2026-11-23)
+
+- Merged 24 upstream commits, no conflicts; locales rebranded, no new Aurora name users see. Aurora's release workflows
+  now publish only when an admin starts them (`.github/actions/release-admin`): the owner is the fork's admin, so our
+  releases are not affected. check.ps1 green but the known AMD water test (Aurora PR #3859).
+- The avatar spin fix went to Aurora as PR #4635 (branch `fix/other-avatar-spin`).

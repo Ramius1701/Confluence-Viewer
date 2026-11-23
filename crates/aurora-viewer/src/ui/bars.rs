@@ -11,7 +11,7 @@ pub mod favorites;
 mod graphics;
 pub mod islands;
 mod location_suggest;
-mod place;
+pub(crate) mod place;
 pub mod side;
 pub(crate) mod sizing;
 mod tp_list;
@@ -21,6 +21,7 @@ use super::icons::Icons;
 use super::menu;
 use super::skin::Layout;
 use crate::theme::Palette;
+use crate::world::tphistory::HistoryItem;
 use egui::{Color32, RichText, Vec2};
 
 /// Advanced › Admin's entries (menu_viewer.xml, the Admin menu).
@@ -149,6 +150,8 @@ pub enum BarAction {
         handle: aurora_net::RegionHandle,
         position: glam::Vec3,
     },
+    /// The exact visit selected in the place menu, including its grid.
+    TeleportSavedPlace(HistoryItem),
     /// Communicate > Online status changed.
     SetStatus(crate::world::status::StatusModes),
     /// Open the chat preferences (automatic responses).
@@ -229,6 +232,9 @@ pub enum BarAction {
     /// Show User Interface (Alt+Shift+U), and hiding it once confirmed.
     ToggleInterface,
     HideInterface,
+    /// Advanced › Rendering features › UI (Ctrl+Alt+F1): the whole
+    /// interface drawn or not (#4092).
+    ToggleUiFeature,
     /// Immersive mode (#859): the interface hidden but the chat.
     ToggleImmersive,
     /// The HUDs shown or hidden in immersive mode (#1190).
@@ -252,14 +258,6 @@ pub struct IslandsLook {
     pub stretch: bool,
     /// The parcel rights are named when there is room.
     pub rights_text: bool,
-}
-
-/// A place of the teleport history, in the place menu.
-#[derive(Debug, Clone, PartialEq)]
-pub struct RecentPlace {
-    pub name: String,
-    pub region: String,
-    pub slurl: String,
 }
 
 pub struct StatusInfo<'a> {
@@ -378,7 +376,7 @@ pub struct StatusInfo<'a> {
     pub own_pic: Option<&'a egui::TextureHandle>,
     /// The last places of the teleport history, newest first, without the
     /// one we are in (the place menu).
-    pub recent: Vec<RecentPlace>,
+    pub recent: Vec<HistoryItem>,
     /// The favourites and where they live.
     pub favorites: &'a favorites::View,
     /// What the system island shows, the traffic indicator, the
@@ -414,6 +412,8 @@ pub struct StatusInfo<'a> {
     /// shortcut, in the order of `RENDER_TYPE_ACTIONS`.
     pub hidden_types: crate::scene::render_types::Hidden,
     pub render_type_keys: [String; 10],
+    /// The keys of Advanced › Rendering features › UI.
+    pub ui_feature_keys: String,
     /// The conversations' thumbnails at the top right (#1134): how many,
     /// 0 for none (`thumbnails::reserve_top`).
     pub conversation_thumbnails: usize,
@@ -1588,6 +1588,19 @@ fn main_menus(ui: &mut egui::Ui, p: &Palette, panels: &mut Panels, st: &StatusIn
             // Develop › Rendering Types (LLAdvancedToggleRenderType)
             menu::submenu(ui, p, RENDER_TYPE_ICONS[0], aurora_i18n::tr!("render-types-menu"), true, |ui| {
                 render_types_menu(ui, p, st, action);
+            });
+            // Advanced › Rendering Features › UI (menu_viewer.xml, ToggleUI:
+            // Advanced.CheckFeature / ToggleFeature "ui"), ticked while the
+            // interface is drawn, which is whenever this menu shows; its
+            // shortcut brings the interface back. The Legacy Viewer's other
+            // features (Selected, Highlighted, Dynamic Textures, Foot
+            // Shadows, Fog, Test FRInfo, Flexible Objects) are debugging
+            // switches of its own pipeline, not ported.
+            menu::submenu(ui, p, "stack-filled", aurora_i18n::tr!("render-features-menu"), true, |ui| {
+                let label = aurora_i18n::tr!("render-features-ui");
+                if menu::check_keys(ui, p, "app-window-filled", label, true, true, &st.ui_feature_keys) {
+                    *action = BarAction::ToggleUiFeature;
+                }
             });
             // Develop › Consoles › Region Debug Console, for those the
             // region gives the console to

@@ -65,14 +65,14 @@ pub use tracks::{
 };
 pub use unread::{CountSize, UnreadCount, unread_count};
 pub use volume::{VolumeScale, perceptual_override, set_perceptual_volume, volume_slider, volume_slider_with};
+pub use workspace::{
+    FORM_LABEL_W, FORM_SLIDER_W, Modal, ModalGround, caret_room, collapsing, collapsing_forced, disclosure_caret, experimental_mark,
+    form_row, glyph, navigation, navigation_beside, navigation_wrapped, paint_glyph, section_header, sort_caret, stat, surface,
+};
 pub(crate) use workspace::{
     INVENTORY_LABEL_PADDING, finish_bar_glass, inventory_item_label, inventory_item_label_tagged, inventory_spacing, island, island_shape,
     organization_drag_preview, organization_drop_target, organization_header, organization_section, organization_source,
     organization_typography, overlay, overlay_frame, paint_world_label,
-};
-pub use workspace::{
-    Modal, ModalGround, caret_room, collapsing, collapsing_forced, disclosure_caret, experimental_mark, glyph, navigation,
-    navigation_beside, navigation_wrapped, paint_glyph, section_header, sort_caret, stat, surface,
 };
 
 /// Whether UI owns a world-pointer event at `pos` (logical points). Resize
@@ -2503,6 +2503,34 @@ pub fn tabs(ui: &mut egui::Ui, p: &Palette, selected: &mut usize, labels: &[(&st
     tabs_row(ui, p, selected, labels, false, false).0
 }
 
+/// Keep tab labels whole by starting another row when their measured
+/// widths do not fit. Selection still uses the original tab index.
+pub fn wrapping_tabs(ui: &mut egui::Ui, p: &Palette, selected: &mut usize, labels: &[(&str, bool)]) -> bool {
+    let widths = tab_widths(ui, labels, &control_font(ui, 12.0));
+    let available = ui.available_width();
+    let mut changed = false;
+    let mut start = 0;
+    while start < labels.len() {
+        let mut end = start + 1;
+        let mut width = widths[start];
+        while end < labels.len() && width + TAB_GAP + widths[end] <= available {
+            width += TAB_GAP + widths[end];
+            end += 1;
+        }
+        let mut index = if (start..end).contains(selected) {
+            *selected - start
+        } else {
+            usize::MAX
+        };
+        if tabs(ui, p, &mut index, &labels[start..end]) {
+            *selected = start + index;
+            changed = true;
+        }
+        start = end;
+    }
+    changed
+}
+
 /// The flat tab strip, with the rect of each tab (a tab that opens when
 /// something is dragged over it).
 pub fn tabs_at(ui: &mut egui::Ui, p: &Palette, selected: &mut usize, labels: &[(&str, bool)]) -> (bool, Vec<egui::Rect>) {
@@ -2524,6 +2552,15 @@ pub fn stretched_tabs(ui: &mut egui::Ui, p: &Palette, selected: &mut usize, labe
     tabs_row(ui, p, selected, labels, true, false).0
 }
 
+const TAB_GAP: f32 = 4.0;
+
+fn tab_widths(ui: &egui::Ui, labels: &[(&str, bool)], font: &egui::FontId) -> Vec<f32> {
+    labels
+        .iter()
+        .map(|(label, _)| ui.fonts_mut(|f| f.layout_no_wrap((*label).to_owned(), font.clone(), Color32::PLACEHOLDER).size().x) + 18.0)
+        .collect()
+}
+
 fn tabs_row(
     ui: &mut egui::Ui,
     p: &Palette,
@@ -2535,7 +2572,7 @@ fn tabs_row(
     let mut changed = false;
     let mut rects = Vec::with_capacity(labels.len());
     ui.horizontal(|ui| {
-        ui.spacing_mut().item_spacing.x = 4.0;
+        ui.spacing_mut().item_spacing.x = TAB_GAP;
         let n = labels.len().max(1) as f32;
         let font = control_font(ui, 12.0);
         let minimum_height = if compact { 22.0 } else { 30.0 };
@@ -2544,10 +2581,7 @@ fn tabs_row(
         } else {
             minimum_height
         };
-        let text_w: Vec<f32> = labels
-            .iter()
-            .map(|(l, _)| ui.fonts_mut(|f| f.layout_no_wrap((*l).to_owned(), font.clone(), Color32::PLACEHOLDER).size().x) + 18.0)
-            .collect();
+        let text_w = tab_widths(ui, labels, &font);
         let gaps = (n - 1.0) * ui.spacing().item_spacing.x;
         let total: f32 = text_w.iter().sum::<f32>() + gaps;
         let compact = ((ui.available_width() - gaps) / (total - gaps)).clamp(0.0, 1.0);
@@ -3679,6 +3713,34 @@ pub fn ink_rect(galley: &egui::Galley) -> egui::Rect {
     if ink.is_positive() { ink } else { galley.rect }
 }
 
+/// A dashed outline in `rect`: a place to drop something or a card that
+/// adds one (the profile's Give zone, the photo filters' drop zones).
+pub fn dashed_outline(painter: &egui::Painter, rect: egui::Rect, color: Color32) {
+    let r = rect.shrink(0.75);
+    let path = [r.left_top(), r.right_top(), r.right_bottom(), r.left_bottom(), r.left_top()];
+    painter.extend(egui::Shape::dashed_line(&path, egui::Stroke::new(1.5, color), 5.0, 4.0));
+}
+
+/// A place number that turns over in `rect` (the contact sets' tiles and
+/// the photo filters' cards while one is held): `before` slides up and
+/// fades as `now` rises in, `turn` going from 0 to 1, eased out with a
+/// touch of overshoot as it lands.
+pub fn turning_number(ui: &egui::Ui, rect: egui::Rect, now: usize, before: Option<usize>, turn: f32, color: Color32) {
+    let painter = ui.painter().with_clip_rect(rect.intersect(ui.clip_rect()));
+    let font = crate::ui::fonts::semibold_format(&crate::ui::fonts::semibold(ui.ctx()), rect.height() * 0.5, color).font_id;
+    let k = turn.clamp(0.0, 1.0);
+    let e = 1.0 - (1.0 - k).powi(3);
+    let travel = rect.height() * 0.6;
+    if let Some(before) = before.filter(|_| k < 1.0) {
+        let g = painter.layout_no_wrap(aurora_i18n::integer(before as i64), font.clone(), color);
+        let at = rect.center() - Vec2::new(0.0, travel * e);
+        paint_ink_centered(&painter, g, at, color.gamma_multiply(1.0 - e));
+    }
+    let g = painter.layout_no_wrap(aurora_i18n::integer(now as i64), font, color);
+    let at = rect.center() + Vec2::new(0.0, travel * (1.0 - e));
+    paint_ink_centered(&painter, g, at, color.gamma_multiply(e.max(0.15)));
+}
+
 /// Paint a galley so that its visible ink (not egui's text row, which
 /// includes ascender / descender room) is centered on `center`: digits in
 /// round badges then sit exactly in the middle.
@@ -4254,5 +4316,53 @@ mod segmented_disabled_tests {
             chosen.push((selected, clicks_work));
         }
         assert_eq!(chosen, vec![(0, false), (1, true)]);
+    }
+}
+
+#[cfg(test)]
+mod wrapping_tabs_tests {
+    use super::*;
+    use crate::ui::widgets::elide_tests::{Frames, painted};
+
+    #[test]
+    fn wrapped_tab_labels_stay_whole_and_clicks_keep_their_index() {
+        let labels = ["Track", "Camera", "Look", "Output", "Filters", "Library"].map(|label| (label, true));
+        let p = crate::theme::Theme::default().palette();
+        for width in [220.0, 340.0] {
+            for font_size in [12.0, 24.0] {
+                let mut frames = Frames::new();
+                let mut selected = 0;
+                let draw = |frames: &mut Frames, events, selected: &mut usize| {
+                    frames.run(events, |ui| {
+                        ui.set_width(width);
+                        ui.style_mut().override_font_id = Some(egui::FontId::proportional(font_size));
+                        wrapping_tabs(ui, &p, selected, &labels);
+                    })
+                };
+                draw(&mut frames, Vec::new(), &mut selected);
+                let texts = draw(&mut frames, Vec::new(), &mut selected);
+                for (label, _) in &labels {
+                    assert!(!painted(&texts, label).cut, "{label} at width {width}, font {font_size}");
+                }
+                let last = painted(&texts, "Library").rect.center();
+                if width == 220.0 || font_size == 24.0 {
+                    assert!(last.y > painted(&texts, "Track").rect.center().y);
+                }
+                draw(&mut frames, vec![egui::Event::PointerMoved(last)], &mut selected);
+                for pressed in [true, false] {
+                    draw(
+                        &mut frames,
+                        vec![egui::Event::PointerButton {
+                            pos: last,
+                            button: egui::PointerButton::Primary,
+                            pressed,
+                            modifiers: Default::default(),
+                        }],
+                        &mut selected,
+                    );
+                }
+                assert_eq!(selected, 5);
+            }
+        }
     }
 }
