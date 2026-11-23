@@ -369,3 +369,6 @@ plan above is superseded; it stays on file.
   (it makes the key on the PC, stores it in the secret, never prints it, and adds the public half to RELEASE_KEYS);
   then Aurora's key line is removed and the change committed. Viewers already installed (0.9.13 beta and older) still
   trust the plain `.sha256` until their first update.
+
+- Signing set up the same day: the owner ran `setup-release-signing.ps1` (environment `release`, secret
+  `UPDATE_SIGNING_KEY`); `RELEASE_KEYS` now holds only Confluence's key (`af5f4a4f…`), Aurora's removed.
