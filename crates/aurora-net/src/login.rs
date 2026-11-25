@@ -593,6 +593,26 @@ fn parse_success(v: Llsd) -> Result<LoginResponse, LoginError> {
     })
 }
 
+/// A transport failure with every cause under it ("error sending request:
+/// client error (Connect): invalid peer certificate: UnknownIssuer"):
+/// reqwest's own text alone does not tell a refused connection from a
+/// certificate or a proxy failure. A cause that repeats the text before it
+/// is left out, and addresses keep only their host (`fetch::redact_urls`).
+fn transport_error(e: reqwest::Error) -> LoginError {
+    let e = e.without_url();
+    let mut text = e.to_string();
+    let mut source = std::error::Error::source(&e);
+    while let Some(cause) = source {
+        let cause_text = cause.to_string();
+        if !text.ends_with(&cause_text) {
+            text.push_str(": ");
+            text.push_str(&cause_text);
+        }
+        source = cause.source();
+    }
+    LoginError::Http(crate::fetch::redact_urls(&text))
+}
+
 /// Perform the login exchange, following "indeterminate" redirects where
 /// `next_server` allows. `http` follows its HTTP redirects with
 /// `redirect_policy`.
@@ -616,7 +636,7 @@ pub async fn login(http: &reqwest::Client, req: &LoginRequest) -> Result<LoginRe
             .body(body)
             .send()
             .await
-            .map_err(|e| LoginError::Http(e.without_url().to_string()))?;
+            .map_err(transport_error)?;
         let status = resp.status();
         // where the client's own redirects (same server) ended
         let at = resp.url().clone();
@@ -632,7 +652,7 @@ pub async fn login(http: &reqwest::Client, req: &LoginRequest) -> Result<LoginRe
             uri = next.into();
             continue;
         }
-        let bytes = resp.bytes().await.map_err(|e| LoginError::Http(e.without_url().to_string()))?;
+        let bytes = resp.bytes().await.map_err(transport_error)?;
         if !status.is_success() {
             return Err(LoginError::Server(status.as_u16()));
         }
@@ -1062,6 +1082,27 @@ mod tests {
             Some("localhost.grid.example".into())
         );
         assert_eq!(unencrypted_server("not an address"), None);
+    }
+
+    #[tokio::test]
+    async fn a_failed_connection_is_told_with_its_cause() {
+        let http = reqwest::Client::builder()
+            .no_proxy()
+            .redirect(redirect_policy())
+            .build()
+            .expect("client");
+        // a port nothing listens on: reqwest's own text is only "error
+        // sending request"; the cause under it says why
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("port");
+        let grid = format!("http://{}/", listener.local_addr().expect("address"));
+        drop(listener);
+        let failed = login(&http, &synthetic_request(&grid, &[])).await;
+        let Err(LoginError::Http(text)) = &failed else {
+            panic!("{failed:?}")
+        };
+        assert!(text.starts_with("error sending request: "), "{text}");
+        assert!(text.len() > "error sending request: ".len() + 5, "{text}");
+        assert!(!text.contains(&grid), "the address stays out: {text}");
     }
 
     #[tokio::test]

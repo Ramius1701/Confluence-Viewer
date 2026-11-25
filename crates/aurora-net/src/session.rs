@@ -487,6 +487,7 @@ pub(crate) async fn run_session(sh: &Shared, req: LoginRequest, cmd_rx: &mut mps
     let login = match login::login(&sh.login_http, &req).await {
         Ok(l) => Arc::new(l),
         Err(e) => {
+            log::warn!("login failed: {e}");
             let (mfa, tos) = (matches!(e, LoginError::MfaRequired(_)), matches!(e, LoginError::TosRequired(_)));
             let critical = matches!(e, LoginError::CriticalMessage(_));
             let bad_credentials = matches!(&e, LoginError::Refused { reason, .. } if reason == "key");
