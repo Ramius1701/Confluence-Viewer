@@ -379,3 +379,12 @@ plan above is superseded; it stays on file.
   advertising `http://casperia-prime.net:8002/` (owner's choice); `https://casperia-prime.net/` also logs in (the
   grid's Apache 443 proxy). Owner's choice for the viewer: no built-in Casperia grid; users who want https type it in
   the grid's login field (a grid info refresh puts the http address back).
+
+## Merge up to Aurora b667c7f6 (2026-11-26)
+
+- Merged 84 upstream commits (Aurora's v0.9.13 and v0.9.14 betas): ray-traced graphics level (Deluxe RT), aurora-j2k
+  texture decoder, inventory explorer, LiveMesh for Maya, the once-per-server unencrypted (http) login step (#4903),
+  wgpu from Aurora's own fork (git dependency). Conflicts: every locale (taken from Aurora, then rebranded) and three
+  tool scripts (build-release.ps1, tools/actions.ps1, tools/checks.ps1: Confluence release folder, exe and log paths;
+  the Linux log folder is `confluenceviewer/logs`). The Maya plugin keeps Aurora's names, like the Blender add-on.
+- RELEASE_KEYS still only Confluence's key. check.ps1 all green.
