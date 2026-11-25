@@ -372,3 +372,10 @@ plan above is superseded; it stays on file.
 
 - Signing set up the same day: the owner ran `setup-release-signing.ps1` (environment `release`, secret
   `UPDATE_SIGNING_KEY`); `RELEASE_KEYS` now holds only Confluence's key (`af5f4a4f…`), Aurora's removed.
+
+## Casperia login over https: by hand only (2026-11-26)
+
+- Aurora #4903 (next merge) asks once before a login goes to a plain `http://` address. Casperia's grid info keeps
+  advertising `http://casperia-prime.net:8002/` (owner's choice); `https://casperia-prime.net/` also logs in (the
+  grid's Apache 443 proxy). Owner's choice for the viewer: no built-in Casperia grid; users who want https type it in
+  the grid's login field (a grid info refresh puts the http address back).
