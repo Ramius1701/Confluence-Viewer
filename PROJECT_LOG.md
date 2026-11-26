@@ -388,3 +388,13 @@ plan above is superseded; it stays on file.
   tool scripts (build-release.ps1, tools/actions.ps1, tools/checks.ps1: Confluence release folder, exe and log paths;
   the Linux log folder is `confluenceviewer/logs`). The Maya plugin keeps Aurora's names, like the Blender add-on.
 - RELEASE_KEYS still only Confluence's key. check.ps1 all green.
+
+## Clearer login errors, SecureLogin, https kept (2026-11-26)
+
+- HANDOFFS "Document plain vs encrypted login" (OpenSim → Viewer). A login's transport error now carries its whole
+  cause chain (logged too, "login failed: …"); an `https://` login to a port that answers in plain http (the grid's
+  `:8002`), or that drops the TLS hello, says so (`login-not-https`, en/fr/ja) instead of "error sending request".
+  Grid info's `SecureLogin` (Confluence-OpenSim 68ad4a2627) becomes the grid's login when it is https; a grid info
+  refresh never replaces an https login with a plain one. README "Grids and encrypted logins". Owner checked
+  2026-11-26: https login, the `https://…:8002/` message, Retrieve keeping https. check.ps1 green.
+- The general part (not SecureLogin) goes to Aurora as a PR.
