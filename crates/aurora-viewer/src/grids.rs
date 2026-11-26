@@ -161,12 +161,19 @@ impl Grid {
                 *field = mine;
             }
         }
+        // an encrypted login the user set is never traded for the plain one
+        // the grid publishes (most grids publish only http://host:8002/)
+        let encrypted = |login: &str| web_url(login).is_some_and(|url| url.scheme() == "https");
+        if encrypted(&self.login) && !encrypted(&retrieved.login) {
+            retrieved.login = self.login;
+        }
         retrieved
     }
 }
 
 pub fn parse_info(address: &str, bytes: &[u8]) -> Result<Grid, Error> {
     let mut grid = Grid::manual(address)?;
+    let mut secure_login = None;
     let root = aurora_llsd::xml::parse(bytes).map_err(|_| Error::Metadata)?;
     if root.name != "gridinfo" {
         return Err(Error::Metadata);
@@ -177,6 +184,11 @@ pub fn parse_info(address: &str, bytes: &[u8]) -> Result<Grid, Error> {
             "gridname" => grid.name = value,
             "gridnick" => grid.nickname = value,
             "login" if !value.is_empty() => grid.login = value,
+            // Confluence-OpenSim's optional `[GridInfoService] SecureLogin`:
+            // an https address for the same login (a proxy on 443 in front
+            // of the plain port). Taken over `login`, so the login goes
+            // encrypted; an http or malformed one is ignored.
+            "SecureLogin" if web_url(&value).is_some_and(|url| url.scheme() == "https") => secure_login = Some(value),
             "gatekeeper" => grid.gatekeeper = value,
             "welcome" => grid.welcome = value,
             "register" => grid.register = value,
@@ -190,6 +202,9 @@ pub fn parse_info(address: &str, bytes: &[u8]) -> Result<Grid, Error> {
             "helperuri" | "economy" if web_url(&value).is_some() => grid.helper = value,
             _ => {}
         }
+    }
+    if let Some(secure) = secure_login {
+        grid.login = secure;
     }
     grid.validate()?;
     Ok(grid)
@@ -612,6 +627,45 @@ mod tests {
         // not published: the user's value
         assert_eq!(merged.search, "https://my.search.example/?q=[QUERY]");
         assert_eq!(merged.nickname, "mine");
+    }
+
+    #[test]
+    fn retrieve_keeps_an_encrypted_login_over_a_plain_one() {
+        let mut mine = Grid::manual("http://grid.example:8002").expect("grid");
+        mine.login = "https://grid.example/".into();
+        let retrieved = Grid::manual("http://grid.example:8002").expect("grid");
+        assert_eq!(retrieved.login, "http://grid.example:8002/");
+        assert_eq!(mine.clone().refreshed(retrieved).login, "https://grid.example/");
+        // a plain login the user had follows the grid, and so does an
+        // encrypted one the grid publishes
+        let mut plain = Grid::manual("http://grid.example:8002").expect("grid");
+        plain.login = "http://old.example:8002/".into();
+        let retrieved = Grid::manual("http://grid.example:8002").expect("grid");
+        assert_eq!(plain.refreshed(retrieved).login, "http://grid.example:8002/");
+        let mut secure = Grid::manual("http://grid.example:8002").expect("grid");
+        secure.login = "https://other.example/".into();
+        assert_eq!(mine.refreshed(secure).login, "https://other.example/");
+    }
+
+    #[test]
+    fn secure_login_is_taken_over_the_plain_login() {
+        let info =
+            |secure: &str| format!("<gridinfo><gridname>Example</gridname><login>http://grid.example:8002/</login>{secure}</gridinfo>");
+        let grid = parse_info(
+            "grid.example:8002",
+            info("<SecureLogin>https://grid.example/</SecureLogin>").as_bytes(),
+        )
+        .expect("grid info");
+        assert_eq!(grid.login, "https://grid.example/");
+        // only an https address counts
+        for ignored in [
+            "",
+            "<SecureLogin>http://grid.example:8003/</SecureLogin>",
+            "<SecureLogin>not an address</SecureLogin>",
+        ] {
+            let grid = parse_info("grid.example:8002", info(ignored).as_bytes()).expect("grid info");
+            assert_eq!(grid.login, "http://grid.example:8002/", "{ignored}");
+        }
     }
 
     /// The login grid (with a gatekeeper) and a second saved grid, logged in

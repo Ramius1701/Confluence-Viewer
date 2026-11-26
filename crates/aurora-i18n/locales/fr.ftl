@@ -9135,6 +9135,7 @@ login-too-many-redirects = too many redirects
 login-next-server-refused = Le serveur de connexion a demandé de continuer votre connexion sans chiffrement ou à une adresse invalide : la connexion a été arrêtée.
 login-server-error = Le serveur de connexion n'a pas pu terminer la connexion (HTTP { $status }). Le problème vient en général de la grille : réessayez dans quelques minutes et consultez la page d'état de la grille pour voir si un incident est connu. Si cela continue, vérifiez votre réseau et votre pare-feu.
 login-not-a-login-server = Cette adresse a répondu, mais pas comme un serveur de connexion : elle a renvoyé une page web ou autre chose à la place d'une réponse de connexion. Vérifiez l'URI de connexion de la grille (elle diffère souvent de l'adresse de son site web), puis réessayez.
+login-not-https = Ce serveur n’utilise pas https sur ce port : rien n’a été envoyé. Utilisez l’URI de connexion exactement comme la grille la donne : son adresse http:// avec le port (souvent :8002), ou son adresse https://, qui n’a en général pas de port.
 build-ui-floaters-transfer = transférer
 fetch-transport-error = transport error
 ui-debug-overlay-too-small = trop petit

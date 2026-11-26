@@ -798,6 +798,25 @@ authorization, remove an account, or drag the rows to reorder the cards. Each
 account and grid keeps its own password (a hash in Windows Credential
 Manager) and, when you tick it, a 30-day MFA authorization.
 
+### Grids and encrypted logins
+
+An OpenSim grid usually gives one login URI, `http://<host>:8002/`. It works,
+but it is not encrypted: anyone who can see your network traffic (public
+Wi-Fi, a shared network) can read your user name and your password hash, and
+the hash is enough to log in as you. The viewer asks once per grid before it
+sends a login that way.
+
+Some grids also offer an encrypted address, such as `https://<host>/`,
+usually without a port. Use it exactly as the grid gives it:
+
+- `https://` with the plain port (`https://<host>:8002/`) never works: that
+  port does not speak https. The viewer stops and says so, and nothing is
+  sent.
+- A grid whose details (grid manager, **Retrieve grid information**) publish a `SecureLogin`
+  address gets that address as its login URI.
+- An `https://` login URI you typed yourself stays when you retrieve the
+  grid's details again, even if the grid publishes only its `http://` one.
+
 ### Language
 
 The viewer ships English, French, Japanese (日本語), Simplified Chinese

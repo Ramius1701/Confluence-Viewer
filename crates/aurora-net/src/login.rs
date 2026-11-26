@@ -216,6 +216,12 @@ pub enum LoginError {
     /// never the parser's words; the parser's error goes to the log.
     #[error("{}", aurora_i18n::tr!("login-not-a-login-server"))]
     NotALoginServer,
+    /// An `https://` login reached a port that answers in plain http (the
+    /// grid's usual `http://host:8002/` written with `https://`): the TLS
+    /// handshake fails before any request, which reqwest only calls "error
+    /// sending request". Nothing was sent. The cause goes to the log.
+    #[error("{}", aurora_i18n::tr!("login-not-https"))]
+    NotHttps,
     #[error("login refused ({reason}): {message}")]
     Refused {
         reason: String,
@@ -598,11 +604,19 @@ fn parse_success(v: Llsd) -> Result<LoginResponse, LoginError> {
 /// reqwest's own text alone does not tell a refused connection from a
 /// certificate or a proxy failure. A cause that repeats the text before it
 /// is left out, and addresses keep only their host (`fetch::redact_urls`).
-fn transport_error(e: reqwest::Error) -> LoginError {
+/// A plain-http answer to the TLS handshake, or a connection dropped during
+/// it on an https address with a port of its own, is told as
+/// [`LoginError::NotHttps`].
+fn transport_error(uri: &str, e: reqwest::Error) -> LoginError {
+    let connecting = e.is_connect();
     let e = e.without_url();
     let mut text = e.to_string();
+    let mut plain_http = false;
+    let mut dropped = false;
     let mut source = std::error::Error::source(&e);
     while let Some(cause) = source {
+        plain_http |= answered_in_plain_http(cause);
+        dropped |= dropped_connection(cause);
         let cause_text = cause.to_string();
         if !text.ends_with(&cause_text) {
             text.push_str(": ");
@@ -610,7 +624,53 @@ fn transport_error(e: reqwest::Error) -> LoginError {
         }
         source = cause.source();
     }
-    LoginError::Http(crate::fetch::redact_urls(&text))
+    let text = crate::fetch::redact_urls(&text);
+    // a plain-http server may instead drop the connection on the TLS hello:
+    // on an https address with a port of its own (`:8002`), told the same way
+    let own_port = reqwest::Url::parse(uri).is_ok_and(|url| url.scheme() == "https" && url.port().is_some_and(|port| port != 443));
+    if plain_http || (connecting && dropped && own_port) {
+        log::warn!("login: the server answered the TLS handshake in plain http ({text})");
+        return LoginError::NotHttps;
+    }
+    LoginError::Http(text)
+}
+
+/// rustls' error when the first bytes back are not a TLS record (an HTTP
+/// reply, `HTTP/1.1 400`): `InvalidContentType`.
+fn answered_in_plain_http(cause: &(dyn std::error::Error + 'static)) -> bool {
+    matches!(
+        wrapped::<rustls::Error>(cause),
+        Some(rustls::Error::InvalidMessage(rustls::InvalidMessage::InvalidContentType))
+    )
+}
+
+/// The connection was closed or reset under the handshake.
+fn dropped_connection(cause: &(dyn std::error::Error + 'static)) -> bool {
+    wrapped::<std::io::Error>(cause).is_some_and(|io| {
+        matches!(
+            io.kind(),
+            std::io::ErrorKind::ConnectionReset | std::io::ErrorKind::ConnectionAborted | std::io::ErrorKind::UnexpectedEof
+        )
+    })
+}
+
+/// `cause` as a `T`, also inside `io::Error`s (the connector nests them:
+/// `Other` around `InvalidData` around rustls' error), whose `source()`
+/// skips the error they wrap.
+fn wrapped<'a, T: std::error::Error + 'static>(cause: &'a (dyn std::error::Error + 'static)) -> Option<&'a T> {
+    let mut current = cause;
+    for _ in 0..4 {
+        if let Some(found) = current.downcast_ref::<T>() {
+            // an io::Error searched for: the innermost one tells the cause
+            let deeper = current
+                .downcast_ref::<std::io::Error>()
+                .and_then(std::io::Error::get_ref)
+                .and_then(|inner| wrapped::<T>(inner));
+            return deeper.or(Some(found));
+        }
+        current = current.downcast_ref::<std::io::Error>().and_then(std::io::Error::get_ref)?;
+    }
+    None
 }
 
 /// Perform the login exchange, following "indeterminate" redirects where
@@ -636,7 +696,7 @@ pub async fn login(http: &reqwest::Client, req: &LoginRequest) -> Result<LoginRe
             .body(body)
             .send()
             .await
-            .map_err(transport_error)?;
+            .map_err(|e| transport_error(&uri, e))?;
         let status = resp.status();
         // where the client's own redirects (same server) ended
         let at = resp.url().clone();
@@ -652,7 +712,7 @@ pub async fn login(http: &reqwest::Client, req: &LoginRequest) -> Result<LoginRe
             uri = next.into();
             continue;
         }
-        let bytes = resp.bytes().await.map_err(transport_error)?;
+        let bytes = resp.bytes().await.map_err(|e| transport_error(&uri, e))?;
         if !status.is_success() {
             return Err(LoginError::Server(status.as_u16()));
         }
@@ -1103,6 +1163,48 @@ mod tests {
         assert!(text.starts_with("error sending request: "), "{text}");
         assert!(text.len() > "error sending request: ".len() + 5, "{text}");
         assert!(!text.contains(&grid), "the address stays out: {text}");
+    }
+
+    /// A plain-http port asked with https://: it reads the TLS hello, then
+    /// answers with an HTTP error page and waits (`answer`), or drops the
+    /// connection at once.
+    async fn plain_http_port(answer: bool) -> u16 {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.expect("port");
+        let port = listener.local_addr().expect("address").port();
+        tokio::spawn(async move {
+            use tokio::io::{AsyncReadExt, AsyncWriteExt};
+            if let Ok((mut socket, _)) = listener.accept().await {
+                let mut hello = [0u8; 512];
+                let _ = socket.read(&mut hello).await;
+                if answer {
+                    let _ = socket
+                        .write_all(
+                            b"HTTP/1.1 400 Bad Request
+Content-Length: 0
+
+",
+                        )
+                        .await;
+                    // until the client gives up
+                    while matches!(socket.read(&mut hello).await, Ok(n) if n > 0) {}
+                }
+            }
+        });
+        port
+    }
+
+    #[tokio::test]
+    async fn https_to_a_plain_http_port_is_told_as_such() {
+        let http = reqwest::Client::builder()
+            .no_proxy()
+            .redirect(redirect_policy())
+            .build()
+            .expect("client");
+        for answer in [true, false] {
+            let port = plain_http_port(answer).await;
+            let failed = login(&http, &synthetic_request(&format!("https://127.0.0.1:{port}/"), &[])).await;
+            assert!(matches!(failed, Err(LoginError::NotHttps)), "answer {answer}: {failed:?}");
+        }
     }
 
     #[tokio::test]
