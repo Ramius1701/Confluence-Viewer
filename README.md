@@ -12,6 +12,7 @@ It is not made or supported by the Aurora Viewer team. The rest of this page is 
   <a href="https://www.rust-lang.org/"><img alt="Rust" src="https://img.shields.io/badge/Rust-Vulkan-8B5CF6?style=flat-square&labelColor=0D1330"></a>
   <a href="#build"><img alt="Platforms: Windows, Linux, macOS (experimental)" src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS%20(experimental)-8B5CF6?style=flat-square&labelColor=0D1330"></a>
   <a href="#grids-and-encrypted-logins"><img alt="For OpenSim grids" src="https://img.shields.io/badge/for-OpenSim%20grids-5EEAD4?style=flat-square&labelColor=0D1330"></a>
+  <a href="https://github.com/Ramius1701/Confluence-Viewer/actions/workflows/ci.yml?query=branch%3Amain"><img alt="CI on main" src="https://img.shields.io/github/actions/workflow/status/Ramius1701/Confluence-Viewer/ci.yml?branch=main&style=flat-square&labelColor=0D1330&color=4F46E5"></a>
   <a href="https://github.com/Ramius1701/Confluence-Viewer/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/Ramius1701/Confluence-Viewer?style=flat-square&labelColor=0D1330&color=4F46E5"></a>
   <a href="https://github.com/Ramius1701/Confluence-Viewer/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/Ramius1701/Confluence-Viewer/main?style=flat-square&labelColor=0D1330&color=4F46E5"></a>
   <a href="https://confluence.ddns.net"><img alt="Website: confluence.ddns.net" src="https://img.shields.io/badge/website-confluence.ddns.net-FBBF24?style=flat-square&labelColor=0D1330"></a>
